@@ -15,6 +15,11 @@ import Testimonials from './collections/Testimonials.js';
 import Settings from './globals/Settings.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const connectionString = process.env.DATABASE_URI || process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URI or DATABASE_URL is required to start Payload (Postgres)');
+}
 
 export default buildConfig({
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:4000',
@@ -36,9 +41,9 @@ export default buildConfig({
   globals: [Settings],
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || process.env.DATABASE_URL
+      connectionString
     },
-    createIfNotExists: false
+    disableCreateDatabase: true
   }),
   typescript: {
     outputFile: path.resolve(__dirname, 'payload-types.ts')
