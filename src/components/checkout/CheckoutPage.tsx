@@ -26,6 +26,7 @@ import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { SavedAddress } from '@/components/addresses/AddressListing'
+import { nanoid } from 'nanoid'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
@@ -129,17 +130,73 @@ export const CheckoutPage: React.FC = () => {
   const initiatePaymentIntent = useCallback(
     async (paymentID: string) => {
       try {
-        const paymentData = (await initiatePayment(paymentID, {
-          additionalData: {
-            ...(email ? { customerEmail: email } : {}),
-            billingAddress,
-            shippingAddress: billingAddressSameAsShipping ? billingAddress : shippingAddress,
-          },
-        })) as Record<string, unknown>
+        // Mock PaymentIntent: create order + items in Supabase to unblock flow
+        const orderId = nanoid(10)
+        const lineItems =
+          cart?.items?.map((item) => {
+            const quantity = item.quantity || 1
+            const product = typeof item.product === 'object' ? item.product : undefined
+            const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+            return {
+              title: product?.title || 'Item',
+              quantity,
+              unit_price: price,
+              total_price: price * quantity,
+              meal_slug: product?.slug,
+            }
+          }) || []
 
-        if (paymentData) {
-          setPaymentData(paymentData)
+        const total =
+          lineItems.reduce((sum, li) => sum + (typeof li.total_price === 'number' ? li.total_price : 0), 0) || 0
+
+        if (user) {
+          const { error: orderError, data: createdOrders } = await supabase
+            .from('orders')
+            .insert({
+              user_id: user.id,
+              customer_email: user.email ?? email,
+              status: 'pending',
+              total_amount: total,
+              items_count: lineItems.length,
+              shipping_address: billingAddressSameAsShipping ? shippingAddress ?? billingAddress : shippingAddress,
+              billing_address: billingAddress,
+              payment_intent_id: `mock_${orderId}`,
+            })
+            .select('id')
+            .limit(1)
+
+          if (orderError) {
+            throw orderError
+          }
+
+          const orderRecord = createdOrders?.[0]
+          const orderDbId = orderRecord?.id
+
+          if (orderDbId) {
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(
+                lineItems.map((li) => ({
+                  order_id: orderDbId,
+                  title: li.title,
+                  quantity: li.quantity,
+                  unit_price: li.unit_price,
+                  total_price: li.total_price,
+                  meal_slug: li.meal_slug,
+                })),
+              )
+
+            if (itemsError) {
+              throw itemsError
+            }
+          }
         }
+
+        const mockPaymentData = {
+          clientSecret: `mock_secret_${orderId}`,
+        }
+
+        setPaymentData(mockPaymentData)
       } catch (error) {
         const errorData = error instanceof Error ? JSON.parse(error.message) : {}
         let errorMessage = 'An error occurred while initiating payment.'
