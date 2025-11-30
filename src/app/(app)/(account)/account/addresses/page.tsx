@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { redirect } from 'next/navigation'
-import { AddressListing } from '@/components/addresses/AddressListing'
-import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export default async function AddressesPage() {
@@ -23,11 +21,10 @@ export default async function AddressesPage() {
       <div className="border p-8 rounded-lg bg-primary-foreground">
         <h1 className="text-3xl font-medium mb-8">Addresses</h1>
 
-        <div className="mb-8">
-          <AddressListing />
-        </div>
-
-        <CreateAddressModal />
+        <p className="text-muted-foreground">
+          Address management will be connected after Supabase-backed orders are wired. For now, you
+          can enter delivery details during checkout.
+        </p>
       </div>
     </>
   )

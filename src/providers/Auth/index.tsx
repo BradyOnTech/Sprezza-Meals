@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
+import { User } from '@supabase/supabase-js'
 
 type AuthUser = {
   id: string
@@ -28,7 +29,7 @@ type AuthContext = {
 
 const Context = createContext({} as AuthContext)
 
-const mapUser = (supabaseUser: { id: string; email?: string | null; user_metadata?: any }): AuthUser => ({
+const mapUser = (supabaseUser: User): AuthUser => ({
   id: supabaseUser.id,
   email: supabaseUser.email,
   name: supabaseUser.user_metadata?.full_name || supabaseUser.email || null,
@@ -111,6 +112,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     void fetchSession()
+  }, [supabase])
+
+  useEffect(() => {
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapUser(session.user))
+        setStatus('loggedIn')
+      } else {
+        setUser(null)
+        setStatus('loggedOut')
+      }
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
   }, [supabase])
 
   const forgotPassword = useCallback<ForgotPassword>(
