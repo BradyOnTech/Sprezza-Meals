@@ -16,15 +16,16 @@ import React, { Suspense, useCallback, useEffect, useState } from 'react'
 
 import { cssVariables } from '@/cssVariables'
 import { CheckoutForm } from '@/components/forms/CheckoutForm'
-import { useAddresses, useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
+import { useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
-import { Address } from '@/payload-types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { FormItem } from '@/components/forms/FormItem'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
+import type { SavedAddress } from '@/components/addresses/AddressListing'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
@@ -42,11 +43,12 @@ export const CheckoutPage: React.FC = () => {
   const [emailEditable, setEmailEditable] = useState(true)
   const [paymentData, setPaymentData] = useState<null | Record<string, unknown>>(null)
   const { initiatePayment } = usePayments()
-  const { addresses } = useAddresses()
-  const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
-  const [billingAddress, setBillingAddress] = useState<Partial<Address>>()
+  const [addresses, setAddresses] = useState<SavedAddress[]>([])
+  const [shippingAddress, setShippingAddress] = useState<SavedAddress>()
+  const [billingAddress, setBillingAddress] = useState<SavedAddress>()
   const [billingAddressSameAsShipping, setBillingAddressSameAsShipping] = useState(true)
   const [isProcessingPayment, setProcessingPayment] = useState(false)
+  const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
 
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
 
@@ -54,17 +56,65 @@ export const CheckoutPage: React.FC = () => {
     (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
   )
 
-  // On initial load wait for addresses to be loaded and check to see if we can prefill a default one
-  useEffect(() => {
-    if (!shippingAddress) {
-      if (addresses && addresses.length > 0) {
-        const defaultAddress = addresses[0]
-        if (defaultAddress) {
-          setBillingAddress(defaultAddress)
-        }
-      }
+  const refreshAddresses = useCallback(async () => {
+    if (!user) {
+      setAddresses([])
+      return
     }
-  }, [addresses])
+
+    const { data, error } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false })
+      .order('updated_at', { ascending: false })
+
+    if (error) {
+      toast.error('Unable to load saved addresses.')
+      return
+    }
+
+    const mapped = (data || []).map((row) => ({
+      id: row.id,
+      title: row.title,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      company: row.company,
+      addressLine1: row.address_line1,
+      addressLine2: row.address_line2,
+      city: row.city,
+      state: row.state,
+      postalCode: row.postal_code,
+      country: row.country,
+      phone: row.phone,
+      isDefault: row.is_default,
+    }))
+
+    setAddresses(mapped)
+  }, [supabase, user])
+
+  // Load saved addresses for logged-in users
+  useEffect(() => {
+    void refreshAddresses()
+  }, [refreshAddresses])
+
+  // Prefill billing/shipping when addresses load
+  useEffect(() => {
+    if (!billingAddress && addresses.length) {
+      const preferred =
+        addresses.find((addr) => addr.isDefault) ||
+        addresses.find((addr) => addr.is_default) ||
+        addresses[0]
+      setBillingAddress(preferred)
+    }
+    if (!billingAddressSameAsShipping && !shippingAddress && addresses.length) {
+      const preferred =
+        addresses.find((addr) => addr.isDefault) ||
+        addresses.find((addr) => addr.is_default) ||
+        addresses[0]
+      setShippingAddress(preferred)
+    }
+  }, [addresses, billingAddress, billingAddressSameAsShipping, shippingAddress])
 
   useEffect(() => {
     return () => {
@@ -102,7 +152,7 @@ export const CheckoutPage: React.FC = () => {
         toast.error(errorMessage)
       }
     },
-    [billingAddress, billingAddressSameAsShipping, shippingAddress],
+    [billingAddress, billingAddressSameAsShipping, email, initiatePayment, shippingAddress],
   )
 
   if (!stripe) return null
@@ -208,14 +258,19 @@ export const CheckoutPage: React.FC = () => {
             />
           </div>
         ) : user ? (
-          <CheckoutAddresses heading="Billing address" setAddress={setBillingAddress} />
+          <CheckoutAddresses
+            addresses={addresses}
+            heading="Billing address"
+            setAddress={setBillingAddress}
+            onRefresh={refreshAddresses}
+          />
         ) : (
           <CreateAddressModal
             disabled={!email || Boolean(emailEditable)}
             callback={(address) => {
               setBillingAddress(address)
             }}
-            skipSubmission={true}
+            skipSubmission={!user}
           />
         )}
 
@@ -253,9 +308,11 @@ export const CheckoutPage: React.FC = () => {
               </div>
             ) : user ? (
               <CheckoutAddresses
+                addresses={addresses}
                 heading="Shipping address"
                 description="Please select a shipping address."
                 setAddress={setShippingAddress}
+                onRefresh={refreshAddresses}
               />
             ) : (
               <CreateAddressModal
@@ -263,7 +320,7 @@ export const CheckoutPage: React.FC = () => {
                   setShippingAddress(address)
                 }}
                 disabled={!email || Boolean(emailEditable)}
-                skipSubmission={true}
+                skipSubmission={!user}
               />
             )}
           </>

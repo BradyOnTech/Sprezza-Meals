@@ -7,7 +7,6 @@ import { Grid } from '@/components/Grid'
 import { MealGridItem } from '@/components/ProductGridItem'
 import { Media } from '@/components/Media'
 import { Button } from '@/components/ui/button'
-import { Price } from '@/components/Price'
 
 type MealFavorite = {
   id: number

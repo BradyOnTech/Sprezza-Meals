@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button'
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { useAuth } from '@/providers/Auth'
-import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -52,7 +51,6 @@ export const AddressForm: React.FC<Props> = ({
   skipSubmission,
 }) => {
   const { user } = useAuth()
-  const router = useRouter()
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
   const {
     register,
@@ -65,39 +63,39 @@ export const AddressForm: React.FC<Props> = ({
 
   const onSubmit = useCallback(
     async (data: AddressFormValues) => {
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      const payload = {
-        user_id: user.id,
-        title: data.title,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        company: data.company,
-        address_line1: data.addressLine1,
-        address_line2: data.addressLine2,
-        city: data.city,
-        state: data.state,
-        postal_code: data.postalCode,
-        country: data.country,
-        phone: data.phone,
-      }
-
       try {
-        if (!skipSubmission) {
-          if (addressID) {
-            const { error } = await supabase
-              .from('addresses')
-              .update(payload)
-              .eq('id', addressID)
-              .eq('user_id', user.id)
-            if (error) throw error
-          } else {
-            const { error } = await supabase.from('addresses').insert(payload)
-            if (error) throw error
+        if (skipSubmission || !user) {
+          if (callback) {
+            callback(data)
           }
+          return
+        }
+
+        const payload = {
+          user_id: user.id,
+          title: data.title,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          company: data.company,
+          address_line1: data.addressLine1,
+          address_line2: data.addressLine2,
+          city: data.city,
+          state: data.state,
+          postal_code: data.postalCode,
+          country: data.country,
+          phone: data.phone,
+        }
+
+        if (addressID) {
+          const { error } = await supabase
+            .from('addresses')
+            .update(payload)
+            .eq('id', addressID)
+            .eq('user_id', user.id)
+          if (error) throw error
+        } else {
+          const { error } = await supabase.from('addresses').insert(payload)
+          if (error) throw error
         }
 
         if (callback) {
@@ -108,7 +106,7 @@ export const AddressForm: React.FC<Props> = ({
         toast.error('Unable to save address. Please try again.')
       }
     },
-    [skipSubmission, callback, addressID, supabase, user, router],
+    [skipSubmission, callback, addressID, supabase, user],
   )
 
   return (

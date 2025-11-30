@@ -10,31 +10,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Address } from '@/payload-types'
-import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
 import { useState } from 'react'
+import type { SavedAddress } from '@/components/addresses/AddressListing'
 
 type Props = {
-  selectedAddress?: Address
-  setAddress: React.Dispatch<React.SetStateAction<Partial<Address> | undefined>>
+  addresses: SavedAddress[]
+  setAddress: React.Dispatch<React.SetStateAction<SavedAddress | undefined>>
   heading?: string
   description?: string
-  setSubmit?: React.Dispatch<React.SetStateAction<() => void | Promise<void>>>
+  onRefresh?: () => void
 }
 
 export const CheckoutAddresses: React.FC<Props> = ({
+  addresses,
   setAddress,
   heading = 'Addresses',
   description = 'Please select or add your shipping and billing addresses.',
+  onRefresh,
 }) => {
-  const { addresses } = useAddresses()
-
   if (!addresses || addresses.length === 0) {
     return (
       <div>
         <p>No addresses found. Please add an address.</p>
 
-        <CreateAddressModal />
+        <CreateAddressModal onSaved={onRefresh} />
       </div>
     )
   }
@@ -45,12 +44,12 @@ export const CheckoutAddresses: React.FC<Props> = ({
         <h3 className="text-xl font-medium mb-2">{heading}</h3>
         <p className="text-muted-foreground">{description}</p>
       </div>
-      <AddressesModal setAddress={setAddress} />
+      <AddressesModal addresses={addresses} onRefresh={onRefresh} setAddress={setAddress} />
     </div>
   )
 }
 
-const AddressesModal: React.FC<Props> = ({ setAddress }) => {
+const AddressesModal: React.FC<Props> = ({ addresses, setAddress, onRefresh }) => {
   const [open, setOpen] = useState(false)
   const handleOpenChange = (state: boolean) => {
     setOpen(state)
@@ -59,7 +58,6 @@ const AddressesModal: React.FC<Props> = ({ setAddress }) => {
   const closeModal = () => {
     setOpen(false)
   }
-  const { addresses } = useAddresses()
 
   if (!addresses || addresses.length === 0) {
     return <p>No addresses found. Please add an address.</p>
@@ -97,7 +95,7 @@ const AddressesModal: React.FC<Props> = ({ setAddress }) => {
             ))}
           </ul>
 
-          <CreateAddressModal />
+          <CreateAddressModal onSaved={onRefresh} />
         </div>
       </DialogContent>
     </Dialog>

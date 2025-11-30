@@ -7,9 +7,25 @@ import { useAuth } from '@/providers/Auth'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
+export type SavedAddress = {
+  id: number | string
+  title?: string | null
+  firstName?: string | null
+  lastName?: string | null
+  company?: string | null
+  addressLine1?: string | null
+  addressLine2?: string | null
+  city?: string | null
+  state?: string | null
+  postalCode?: string | null
+  country?: string | null
+  phone?: string | null
+  isDefault?: boolean | null
+}
+
 export const AddressListing: React.FC<{ refreshKey?: number }> = ({ refreshKey }) => {
   const { user } = useAuth()
-  const [addresses, setAddresses] = React.useState<any[]>([])
+  const [addresses, setAddresses] = React.useState<SavedAddress[]>([])
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
   const router = useRouter()
 
