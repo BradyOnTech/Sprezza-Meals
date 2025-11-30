@@ -27,6 +27,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { SavedAddress } from '@/components/addresses/AddressListing'
 import { useBuilderCart } from '@/providers/BuilderCart'
+import { useMealCart } from '@/providers/MealCart'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
@@ -37,6 +38,7 @@ export const CheckoutPage: React.FC = () => {
   const router = useRouter()
   const { cart } = useCart()
   const { items: builderItems, clear: clearBuilderCart } = useBuilderCart()
+  const { items: mealItems, clear: clearMealCart } = useMealCart()
   const [error, setError] = useState<null | string>(null)
   const { theme } = useTheme()
   /**
@@ -54,7 +56,8 @@ export const CheckoutPage: React.FC = () => {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
   const [tipAmount, setTipAmount] = useState<number>(0)
 
-  const cartIsEmpty = (!cart || !cart.items || !cart.items.length) && builderItems.length === 0
+  const cartIsEmpty =
+    (!cart || !cart.items || !cart.items.length) && builderItems.length === 0 && mealItems.length === 0
 
   const canGoToPayment = Boolean(
     (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
@@ -131,20 +134,23 @@ export const CheckoutPage: React.FC = () => {
   }, [])
 
   const subtotal = useMemo(() => {
-    return (
-      (cart?.items?.reduce((sum, item) => {
-        const builder = (item as any)?.metadata?.builder
-        const qty = item.quantity || 1
-        if (builder?.totals?.price) {
-          return sum + Number(builder.totals.price) * qty
-        }
+    const productTotal =
+      cart?.items?.reduce((sum, item) => {
         const product = typeof item.product === 'object' ? item.product : undefined
-        const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+        const price =
+          product && typeof product.priceInUSD === 'number' ? product.priceInUSD / 100 : 0
+        const qty = item.quantity || 1
         return sum + price * qty
-      }, 0) || 0) +
-      (builderItems?.reduce((sum, item) => sum + item.totals.price * (item.quantity || 1), 0) || 0)
-    )
-  }, [cart?.items, builderItems])
+      }, 0) || 0
+
+    const builderTotal =
+      builderItems?.reduce((sum, item) => sum + item.totals.price * (item.quantity || 1), 0) || 0
+
+    const mealTotal =
+      mealItems?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || 0
+
+    return productTotal + builderTotal + mealTotal
+  }, [cart?.items, builderItems, mealItems])
 
   const initiatePaymentIntent = useCallback(async (_paymentID: string) => {
     try {
@@ -152,7 +158,8 @@ export const CheckoutPage: React.FC = () => {
         cart?.items?.map((item) => {
           const quantity = item.quantity || 1
           const product = typeof item.product === 'object' ? item.product : undefined
-          const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+          const price =
+            product && typeof product.priceInUSD === 'number' ? product.priceInUSD / 100 : 0
           return {
             title: product?.title || 'Item',
             quantity,
@@ -173,7 +180,17 @@ export const CheckoutPage: React.FC = () => {
           metadata: { builder: item },
         })) || []
 
-      const lineItems = [...productLineItems, ...builderLineItems]
+      const mealLineItems =
+        mealItems?.map((item) => ({
+          title: item.title || 'Meal',
+          quantity: item.quantity || 1,
+          unit_price: Number(item.price || 0),
+          total_price: Number(item.price || 0) * (item.quantity || 1),
+          meal_slug: item.slug,
+          metadata: { mealId: item.mealId },
+        })) || []
+
+      const lineItems = [...productLineItems, ...builderLineItems, ...mealLineItems]
 
       const tax = subtotal * TAX_RATE
       const total = subtotal + tax + (tipAmount || 0)
@@ -231,6 +248,7 @@ export const CheckoutPage: React.FC = () => {
         setPaymentData(mockPaymentData)
         // clear builder cart after creating order
         clearBuilderCart()
+        clearMealCart()
       } catch (error) {
         const errorData = error instanceof Error ? JSON.parse(error.message) : {}
         let errorMessage = 'An error occurred while initiating payment.'
@@ -248,7 +266,9 @@ export const CheckoutPage: React.FC = () => {
     builderItems,
     cart?.items,
     clearBuilderCart,
+    clearMealCart,
     email,
+    mealItems,
     shippingAddress,
     supabase,
     tipAmount,
@@ -528,61 +548,44 @@ export const CheckoutPage: React.FC = () => {
       {!cartIsEmpty && (
         <div className="basis-full lg:basis-1/3 lg:pl-8 p-8 border-none bg-primary/5 flex flex-col gap-8 rounded-lg">
           <h2 className="text-3xl font-medium">Your cart</h2>
+          {mealItems.length > 0 && (
+            <div className="space-y-3">
+              {mealItems.map((item) => (
+                <div className="flex items-center justify-between" key={item.id}>
+                  <div>
+                    <p className="font-semibold">{item.title || 'Meal'}</p>
+                    <p className="text-xs text-muted-foreground">{item.slug}</p>
+                    <p className="text-xs text-muted-foreground">x{item.quantity || 1}</p>
+                  </div>
+                  <Price amount={(item.price || 0) * (item.quantity || 1)} inCents={false} />
+                </div>
+              ))}
+              <hr />
+            </div>
+          )}
           <div className="rounded-lg border bg-white/70 dark:bg-black/30 p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
               <span>
-                <Price
-                  amount={
-                    (cart?.items || []).reduce((sum, item) => {
-                      const product = typeof item.product === 'object' ? item.product : undefined
-                      const price =
-                        product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
-                      const qty = item.quantity || 1
-                      return sum + price * qty
-                    }, 0) || 0
-                  }
-                />
+                <Price amount={subtotal} inCents={false} />
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Estimated tax ({(TAX_RATE * 100).toFixed(1)}%)</span>
               <span>
-                <Price
-                  amount={
-                    ((cart?.items || []).reduce((sum, item) => {
-                      const product = typeof item.product === 'object' ? item.product : undefined
-                      const price =
-                        product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
-                      const qty = item.quantity || 1
-                      return sum + price * qty
-                    }, 0) || 0) * TAX_RATE
-                  }
-                />
+                <Price amount={subtotal * TAX_RATE} inCents={false} />
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Tip</span>
               <span>
-                <Price amount={tipAmount || 0} />
+                <Price amount={tipAmount || 0} inCents={false} />
               </span>
             </div>
             <div className="flex items-center justify-between text-base font-semibold pt-2 border-t">
               <span>Total</span>
               <span>
-                <Price
-                  amount={
-                    ((cart?.items || []).reduce((sum, item) => {
-                      const product = typeof item.product === 'object' ? item.product : undefined
-                      const price =
-                        product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
-                      const qty = item.quantity || 1
-                      return sum + price * qty
-                    }, 0) || 0) *
-                      (1 + TAX_RATE) +
-                    (tipAmount || 0)
-                  }
-                />
+                <Price amount={subtotal * (1 + TAX_RATE) + (tipAmount || 0)} inCents={false} />
               </span>
             </div>
           </div>
@@ -663,7 +666,11 @@ export const CheckoutPage: React.FC = () => {
           <hr />
           <div className="flex justify-between items-center gap-2">
             <span className="uppercase">Total</span>{' '}
-            <Price className="text-3xl font-medium" amount={cart.subtotal || 0} />
+            <Price
+              className="text-3xl font-medium"
+              amount={subtotal * (1 + TAX_RATE) + (tipAmount || 0)}
+              inCents={false}
+            />
           </div>
         </div>
       )}

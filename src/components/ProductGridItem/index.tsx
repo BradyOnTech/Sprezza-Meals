@@ -35,7 +35,7 @@ export const MealGridItem: React.FC<Props> = ({ meal }) => {
         <div className="flex items-start justify-between gap-2">
           <div className="font-mono text-primary/50 group-hover:text-primary/100">{title}</div>
           {typeof price === 'number' ? (
-            <Price amount={price} className="text-primary" />
+            <Price amount={price} className="text-primary" inCents={false} />
           ) : null}
         </div>
         {summary ? (

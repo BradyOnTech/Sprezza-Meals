@@ -4,6 +4,7 @@ import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
 import { MealSummary } from '@/components/meal/MealSummary'
 import { FavoriteToggle } from '@/components/favorites/FavoriteToggle'
+import { AddToCart } from '@/components/Cart/AddToCart'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -120,8 +121,9 @@ export default async function MealPage({ params }: Args) {
 
           <div className="basis-full lg:basis-1/2">
             <MealSummary meal={meal} />
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex items-center justify-between gap-4">
               <FavoriteToggle mealId={meal.id} />
+              <AddToCart product={meal as any} />
             </div>
           </div>
         </div>

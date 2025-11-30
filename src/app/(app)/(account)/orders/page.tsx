@@ -44,7 +44,7 @@ export default async function Orders() {
                 </div>
                 <div className="text-right">
                   {typeof order.total_amount === 'number' ? (
-                    <Price amount={Number(order.total_amount)} currencyCode="USD" />
+                    <Price amount={Number(order.total_amount)} currencyCode="USD" inCents={false} />
                   ) : (
                     <p className="text-sm text-muted-foreground">Pending total</p>
                   )}

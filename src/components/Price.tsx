@@ -6,6 +6,11 @@ type BaseProps = {
   className?: string
   currencyCodeClassName?: string
   as?: 'span' | 'p'
+  /**
+   * Plugin currency formatter expects minor units (cents).
+   * Set to false when you already have dollar amounts.
+   */
+  inCents?: boolean
 }
 
 type PriceFixed = {
@@ -31,6 +36,7 @@ export const Price = ({
   lowestAmount,
   currencyCode: currencyCodeFromProps,
   as = 'p',
+  inCents = true,
 }: Props & React.ComponentProps<'p'>) => {
   const { formatCurrency, supportedCurrencies } = useCurrency()
 
@@ -43,26 +49,39 @@ export const Price = ({
     return undefined
   }, [currencyCodeFromProps, supportedCurrencies])
 
-  if (typeof amount === 'number') {
+  const toMinorUnits = (value?: number) => {
+    if (typeof value !== 'number') return value
+    return inCents ? value : Math.round(value * 100)
+  }
+
+  const amountInMinor = toMinorUnits(amount)
+  const highestInMinor = toMinorUnits(highestAmount)
+  const lowestInMinor = toMinorUnits(lowestAmount)
+
+  if (typeof amountInMinor === 'number') {
     return (
       <Element className={className} suppressHydrationWarning>
-        {formatCurrency(amount, { currency: currencyToUse })}
+        {formatCurrency(amountInMinor, { currency: currencyToUse })}
       </Element>
     )
   }
 
-  if (highestAmount && highestAmount !== lowestAmount) {
+  if (
+    typeof highestInMinor === 'number' &&
+    typeof lowestInMinor === 'number' &&
+    highestInMinor !== lowestInMinor
+  ) {
     return (
       <Element className={className} suppressHydrationWarning>
-        {`${formatCurrency(lowestAmount, { currency: currencyToUse })} - ${formatCurrency(highestAmount, { currency: currencyToUse })}`}
+        {`${formatCurrency(lowestInMinor, { currency: currencyToUse })} - ${formatCurrency(highestInMinor, { currency: currencyToUse })}`}
       </Element>
     )
   }
 
-  if (lowestAmount) {
+  if (typeof lowestInMinor === 'number') {
     return (
       <Element className={className} suppressHydrationWarning>
-        {`${formatCurrency(lowestAmount, { currency: currencyToUse })}`}
+        {`${formatCurrency(lowestInMinor, { currency: currencyToUse })}`}
       </Element>
     )
   }

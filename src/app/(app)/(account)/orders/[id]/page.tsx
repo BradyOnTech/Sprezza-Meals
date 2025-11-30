@@ -59,7 +59,7 @@ export default async function Order({ params, searchParams }: PageProps) {
         </div>
         <div className="text-right">
           {typeof order.total_amount === 'number' ? (
-            <Price amount={Number(order.total_amount)} currencyCode="USD" />
+            <Price amount={Number(order.total_amount)} currencyCode="USD" inCents={false} />
           ) : (
             <p className="text-sm text-muted-foreground">Pending total</p>
           )}
@@ -87,9 +87,13 @@ export default async function Order({ params, searchParams }: PageProps) {
                   </div>
                   <div className="text-right">
                     {typeof item.total_price === 'number' ? (
-                      <Price amount={Number(item.total_price)} currencyCode="USD" />
+                      <Price amount={Number(item.total_price)} currencyCode="USD" inCents={false} />
                     ) : (
-                      <Price amount={Number(item.unit_price || 0) * Number(item.quantity || 1)} currencyCode="USD" />
+                      <Price
+                        amount={Number(item.unit_price || 0) * Number(item.quantity || 1)}
+                        currencyCode="USD"
+                        inCents={false}
+                      />
                     )}
                   </div>
                 </li>
@@ -117,13 +121,26 @@ export default async function Order({ params, searchParams }: PageProps) {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Subtotal</dt>
-              <dd>{items && items.length ? <Price amount={items.reduce((sum, item) => sum + Number(item.total_price || 0), 0)} currencyCode="USD" /> : '—'}</dd>
+              <dd>
+                {items && items.length ? (
+                  <Price
+                    amount={items.reduce(
+                      (sum, item) => sum + Number(item.total_price || 0),
+                      0,
+                    )}
+                    currencyCode="USD"
+                    inCents={false}
+                  />
+                ) : (
+                  '—'
+                )}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Tax</dt>
               <dd>
                 {typeof order.tax_amount === 'number' ? (
-                  <Price amount={Number(order.tax_amount)} currencyCode="USD" />
+                  <Price amount={Number(order.tax_amount)} currencyCode="USD" inCents={false} />
                 ) : (
                   '—'
                 )}
@@ -133,7 +150,7 @@ export default async function Order({ params, searchParams }: PageProps) {
               <dt className="text-muted-foreground">Tip</dt>
               <dd>
                 {typeof order.tip_amount === 'number' ? (
-                  <Price amount={Number(order.tip_amount)} currencyCode="USD" />
+                  <Price amount={Number(order.tip_amount)} currencyCode="USD" inCents={false} />
                 ) : (
                   '—'
                 )}
@@ -143,7 +160,7 @@ export default async function Order({ params, searchParams }: PageProps) {
               <dt>Total</dt>
               <dd>
                 {typeof order.total_amount === 'number' ? (
-                  <Price amount={Number(order.total_amount)} currencyCode="USD" />
+                  <Price amount={Number(order.total_amount)} currencyCode="USD" inCents={false} />
                 ) : (
                   '—'
                 )}

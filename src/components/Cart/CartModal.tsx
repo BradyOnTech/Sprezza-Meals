@@ -22,11 +22,13 @@ import { OpenCartButton } from './OpenCart'
 import { Button } from '@/components/ui/button'
 import { Product } from '@/payload-types'
 import { useBuilderCart } from '@/providers/BuilderCart'
+import { useMealCart } from '@/providers/MealCart'
 
 export function CartModal() {
   const { cart } = useCart()
   const { items: builderItems, updateQuantity: updateBuilderQty, removeItem: removeBuilder } =
     useBuilderCart()
+  const { items: mealItems, updateQuantity: updateMealQty, removeItem: removeMeal } = useMealCart()
   const [isOpen, setIsOpen] = useState(false)
 
   const pathname = usePathname()
@@ -39,22 +41,28 @@ export function CartModal() {
   const totalQuantity = useMemo(() => {
     const base = cart?.items?.reduce((quantity, item) => (item.quantity || 0) + quantity, 0) || 0
     const builderCount = builderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
-    const total = base + builderCount
+    const mealCount = mealItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
+    const total = base + builderCount + mealCount
     return total || undefined
-  }, [cart, builderItems])
+  }, [cart, builderItems, mealItems])
 
   const fallbackTotal = useMemo(() => {
     const productTotal =
       cart?.items?.reduce((sum, item) => {
         const product = item.product
         const qty = item.quantity || 1
-        if (typeof product === 'object' && product?.priceInUSD) return sum + product.priceInUSD * qty
+        if (typeof product === 'object' && typeof product?.priceInUSD === 'number')
+          return sum + (product.priceInUSD / 100) * qty
         return sum
       }, 0) || 0
     const builderTotal =
       builderItems?.reduce((sum, item) => sum + item.totals.price * (item.quantity || 1), 0) || 0
-    return productTotal + builderTotal
-  }, [cart?.items, builderItems])
+    const mealTotal =
+      mealItems?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || 0
+    return productTotal + builderTotal + mealTotal
+  }, [cart?.items, builderItems, mealItems])
+
+  const hasItems = Boolean(totalQuantity && totalQuantity > 0)
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
@@ -69,7 +77,7 @@ export function CartModal() {
           <SheetDescription>Manage your cart here, add items to view the total.</SheetDescription>
         </SheetHeader>
 
-        {!cart || (cart?.items?.length === 0 && builderItems.length === 0) ? (
+        {!hasItems ? (
           <div className="text-center flex flex-col items-center gap-2">
             <ShoppingCart className="h-16" />
             <p className="text-center text-2xl font-bold">Your cart is empty.</p>
@@ -78,6 +86,64 @@ export function CartModal() {
           <div className="grow flex px-4">
             <div className="flex flex-col justify-between w-full">
               <ul className="grow overflow-auto py-4">
+                {mealItems.map((meal) => {
+                  const qty = meal.quantity || 1
+                  return (
+                    <li className="flex w-full flex-col" key={meal.id}>
+                      <div className="relative flex w-full flex-row justify-between px-1 py-4">
+                        <div className="absolute z-40 -mt-2 ml-[55px]">
+                          <button
+                            aria-label="Remove meal"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              removeMeal(meal.id)
+                            }}
+                            className="rounded-full bg-neutral-500 px-2 py-1 text-white text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="z-30 flex flex-row space-x-4 w-full">
+                          <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900" />
+                          <div className="flex flex-1 flex-col text-base">
+                            <span className="leading-tight font-semibold">{meal.title || 'Meal'}</span>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">{meal.slug}</p>
+                          </div>
+                        </div>
+                        <div className="flex h-16 flex-col justify-between">
+                          <Price
+                            amount={meal.price || 0}
+                            className="flex justify-end space-y-2 text-right text-sm"
+                            inCents={false}
+                          />
+                          <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
+                            <button
+                              className="px-2"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                updateMealQty(meal.id, Math.max(1, qty - 1))
+                              }}
+                            >
+                              -
+                            </button>
+                            <p className="w-6 text-center">
+                              <span className="w-full text-sm">{qty}</span>
+                            </p>
+                            <button
+                              className="px-2"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                updateMealQty(meal.id, qty + 1)
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
                 {builderItems.map((builder) => {
                   const qty = builder.quantity || 1
                   const price = builder.totals.price || 0
@@ -112,6 +178,7 @@ export function CartModal() {
                           <Price
                             amount={price}
                             className="flex justify-end space-y-2 text-right text-sm"
+                            inCents={false}
                           />
                           <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
                             <button
@@ -248,8 +315,11 @@ export function CartModal() {
                   <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
                     <p>Total</p>
                     <Price
-                      amount={typeof cart?.subtotal === 'number' ? cart.subtotal : fallbackTotal}
+                      amount={
+                        typeof cart?.subtotal === 'number' ? cart.subtotal / 100 : fallbackTotal
+                      }
                       className="text-right text-base text-black dark:text-white"
+                      inCents={false}
                     />
                   </div>
 

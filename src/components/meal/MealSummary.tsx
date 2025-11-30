@@ -38,7 +38,7 @@ export function MealSummary({ meal }: Props) {
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-semibold">{meal.title}</h1>
-          <Price amount={meal.price} className="text-lg font-mono text-primary" />
+          <Price amount={meal.price} className="text-lg font-mono text-primary" inCents={false} />
         </div>
         {meal.summary ? <p className="text-muted-foreground">{meal.summary}</p> : null}
       </div>

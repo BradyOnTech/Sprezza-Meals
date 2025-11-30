@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import type { Product, Variant } from '@/payload-types'
 
-import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
+import { useMealCart } from '@/providers/MealCart'
 import clsx from 'clsx'
 import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
@@ -13,7 +13,7 @@ type Props = {
 }
 
 export function AddToCart({ product }: Props) {
-  const { addItem, cart } = useCart()
+  const { addItem } = useMealCart()
   const searchParams = useSearchParams()
 
   const variants = product.variants?.docs || []
@@ -42,57 +42,30 @@ export function AddToCart({ product }: Props) {
       e.preventDefault()
 
       addItem({
-        product: product.id,
-        variant: selectedVariant?.id ?? undefined,
-      }).then(() => {
-        toast.success('Item added to cart.')
+        mealId: product.id,
+        slug: product.slug,
+        title: product.title,
+        price:
+          (selectedVariant && typeof selectedVariant?.priceInUSD === 'number'
+            ? selectedVariant.priceInUSD
+            : undefined) ??
+          (typeof product.price === 'number' ? product.price : undefined) ??
+          (typeof (product as any).priceInUSD === 'number' ? (product as any).priceInUSD : 0),
       })
+      toast.success('Item added to cart.')
     },
     [addItem, product, selectedVariant],
   )
 
   const disabled = useMemo<boolean>(() => {
-    const existingItem = cart?.items?.find((item) => {
-      const productID = typeof item.product === 'object' ? item.product?.id : item.product
-      const variantID = item.variant
-        ? typeof item.variant === 'object'
-          ? item.variant?.id
-          : item.variant
-        : undefined
-
-      if (productID === product.id) {
-        if (product.enableVariants) {
-          return variantID === selectedVariant?.id
-        }
-        return true
-      }
-    })
-
-    if (existingItem) {
-      const existingQuantity = existingItem.quantity
-
-      if (product.enableVariants) {
-        return existingQuantity >= (selectedVariant?.inventory || 0)
-      }
-      return existingQuantity >= (product.inventory || 0)
-    }
-
     if (product.enableVariants) {
-      if (!selectedVariant) {
-        return true
-      }
-
-      if (selectedVariant.inventory === 0) {
-        return true
-      }
+      if (!selectedVariant) return true
+      if (selectedVariant.inventory === 0) return true
     } else {
-      if (product.inventory === 0) {
-        return true
-      }
+      if (product.inventory === 0) return true
     }
-
     return false
-  }, [selectedVariant, cart?.items, product])
+  }, [selectedVariant, product])
 
   return (
     <Button

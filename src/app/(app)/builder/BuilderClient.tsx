@@ -156,7 +156,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
                     onChange={() => setSelectedBase(base.id)}
                   />
                 </div>
-                <Price amount={base.basePrice || 0} />
+                <Price amount={base.basePrice || 0} inCents={false} />
               </label>
             ))}
           </CardContent>
@@ -223,7 +223,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground text-sm">Price</span>
-                  <Price amount={totals.totals.price} />
+                  <Price amount={totals.totals.price} inCents={false} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <Stat label="Calories" value={`${totals.totals.nutrition.calories.toFixed(0)} kcal`} />
