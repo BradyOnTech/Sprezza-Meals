@@ -30,7 +30,7 @@ export default async function ShopPage({ searchParams }: Props) {
   if (categoryParam) {
     const categoryLookup = await payload.find({
       collection: 'meal-categories',
-      draft: false,
+      draft: true,
       limit: 1,
       overrideAccess: false,
       pagination: false,
@@ -56,7 +56,7 @@ export default async function ShopPage({ searchParams }: Props) {
   const meals = await payload.find({
     collection: 'meals',
     depth: 2,
-    draft: false,
+    draft: true,
     overrideAccess: false,
     select: {
       title: true,
@@ -71,7 +71,6 @@ export default async function ShopPage({ searchParams }: Props) {
     sort: sortValue,
     where: {
       and: [
-        { _status: { equals: 'published' } },
         { 'flags.isActive': { equals: true } },
         ...(searchValue
           ? [

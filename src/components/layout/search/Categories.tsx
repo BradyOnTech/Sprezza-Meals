@@ -10,6 +10,7 @@ async function CategoryList() {
 
   const categories = await payload.find({
     collection: 'meal-categories',
+    draft: true,
     sort: 'displayOrder',
     select: {
       id: true,
@@ -17,10 +18,7 @@ async function CategoryList() {
       title: true,
     },
     where: {
-      and: [
-        { _status: { equals: 'published' } },
-        { isActive: { equals: true } },
-      ],
+      and: [{ isActive: { equals: true } }],
     },
   })
 
