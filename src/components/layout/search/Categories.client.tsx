@@ -21,7 +21,7 @@ export const CategoryItem: React.FC<Props> = ({ category }) => {
   const setQuery = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
 
-    if (isActive) {
+    if (isActive || !category.slug) {
       params.delete('category')
     } else {
       params.set('category', String(category.slug))

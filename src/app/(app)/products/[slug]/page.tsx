@@ -177,9 +177,9 @@ const queryMealBySlug = async ({ slug }: { slug: string }) => {
   const result = await payload.find({
     collection: 'meals',
     depth: 3,
-    draft,
+    draft: true,
     limit: 1,
-    overrideAccess: draft,
+    overrideAccess: true,
     pagination: false,
     where: {
       and: [
@@ -188,8 +188,9 @@ const queryMealBySlug = async ({ slug }: { slug: string }) => {
             equals: slug,
           },
         },
-        ...(draft ? [] : [{ _status: { equals: 'published' } }]),
-        ...(draft ? [] : [{ 'flags.isActive': { equals: true } }]),
+        {
+          'flags.isActive': { equals: true },
+        },
       ],
     },
   })

@@ -21,7 +21,7 @@ export const DietaryTagItem: React.FC<Props> = ({ tag }) => {
   const setQuery = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
 
-    if (isActive) {
+    if (isActive || !tag.slug) {
       params.delete('tag')
     } else {
       params.set('tag', String(tag.slug))

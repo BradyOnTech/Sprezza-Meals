@@ -31,42 +31,58 @@ export default async function ShopPage({ searchParams }: Props) {
   let tagId: string | number | undefined
 
   if (categoryParam) {
-    const categoryLookup = await payload.find({
-      collection: 'meal-categories',
-      draft: true,
-      limit: 1,
-      overrideAccess: false,
-      pagination: false,
-      select: {
-        id: true,
-      },
-      where: {
-        or: [
-          { slug: { equals: categoryParam } },
-          { id: { equals: categoryParam } },
-        ],
-      },
-    })
+    try {
+      const categoryOr: any[] = [{ slug: { equals: categoryParam } }]
+      const asNumber = Number(categoryParam)
+      if (Number.isFinite(asNumber)) {
+        categoryOr.push({ id: { equals: asNumber } })
+      }
 
-    categoryId = categoryLookup?.docs?.[0]?.id
+      const categoryLookup = await payload.find({
+        collection: 'meal-categories',
+        draft: true,
+        limit: 1,
+        overrideAccess: false,
+        pagination: false,
+        select: {
+          id: true,
+        },
+        where: {
+          or: categoryOr,
+        },
+      })
+
+      categoryId = categoryLookup?.docs?.[0]?.id
+    } catch (err) {
+      console.error('Failed to resolve category', err)
+      categoryId = undefined
+    }
   }
 
   if (tagParam) {
-    const tagLookup = await payload.find({
-      collection: 'dietary-tags',
-      draft: true,
-      limit: 1,
-      overrideAccess: false,
-      pagination: false,
-      select: { id: true },
-      where: {
-        or: [
-          { slug: { equals: tagParam } },
-          { id: { equals: tagParam } },
-        ],
-      },
-    })
-    tagId = tagLookup?.docs?.[0]?.id
+    try {
+      const tagOr: any[] = [{ slug: { equals: tagParam } }]
+      const asNumber = Number(tagParam)
+      if (Number.isFinite(asNumber)) {
+        tagOr.push({ id: { equals: asNumber } })
+      }
+
+      const tagLookup = await payload.find({
+        collection: 'dietary-tags',
+        draft: true,
+        limit: 1,
+        overrideAccess: false,
+        pagination: false,
+        select: { id: true },
+        where: {
+          or: tagOr,
+        },
+      })
+      tagId = tagLookup?.docs?.[0]?.id
+    } catch (err) {
+      console.error('Failed to resolve tag', err)
+      tagId = undefined
+    }
   }
 
   const sortValue =
@@ -75,43 +91,67 @@ export default async function ShopPage({ searchParams }: Props) {
       : 'title'
 
   if (categoryParam === 'plans') {
-    const plans = await payload.find({
-      collection: 'meal-plans',
-      draft: true,
-      overrideAccess: false,
-      select: {
-        title: true,
-        slug: true,
-        tagline: true,
-        schedule: true,
-        image: true,
-        isActive: true,
-      },
-      where: {
-        and: [{ _status: { equals: 'published' } }, { isActive: { equals: true } }],
-      },
-    })
+    let plans: any[] = []
+    let planError: string | null = null
 
-    const resultsText = plans.docs.length > 1 ? 'results' : 'result'
+    try {
+      const res = await payload.find({
+        collection: 'meal-plans',
+        draft: true,
+        overrideAccess: false,
+        select: {
+          title: true,
+          slug: true,
+          tagline: true,
+          schedule: true,
+          image: true,
+          isActive: true,
+        },
+        where: {
+          and: [
+            ...(searchValue
+              ? [
+                  {
+                    or: [
+                      { title: { like: searchValue } },
+                      { tagline: { like: searchValue } },
+                    ],
+                  },
+                ]
+              : []),
+            ...(resolvedParams?.status === 'draft' ? [] : [{ _status: { equals: 'published' } }]),
+            { isActive: { equals: true } },
+          ],
+        },
+      })
+      plans = res.docs || []
+    } catch (err: any) {
+      planError = 'Unable to load plans right now.'
+      console.error(err)
+    }
+
+    const resultsText = plans.length > 1 ? 'results' : 'result'
 
     return (
       <div>
+        {planError ? <p className="mb-4 text-red-500 text-sm">{planError}</p> : null}
+
         {searchValue ? (
           <p className="mb-4">
-            {plans.docs?.length === 0
+            {plans.length === 0
               ? 'There are no meal plans that match '
-              : `Showing ${plans.docs.length} ${resultsText} for `}
+              : `Showing ${plans.length} ${resultsText} for `}
             <span className="font-bold">&quot;{searchValue}&quot;</span>
           </p>
         ) : null}
 
-        {!searchValue && plans.docs?.length === 0 && (
+        {!searchValue && plans.length === 0 && (
           <p className="mb-4">No meal plans found. Please try different filters.</p>
         )}
 
-        {plans?.docs.length > 0 ? (
+        {plans.length > 0 ? (
           <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.docs.map((plan) => {
+            {plans.map((plan) => {
               return <PlanGridItem key={plan.id} plan={plan as any} />
             })}
           </Grid>
@@ -120,77 +160,87 @@ export default async function ShopPage({ searchParams }: Props) {
     )
   }
 
-  const meals = await payload.find({
-    collection: 'meals',
-    depth: 2,
-    draft: true,
-    overrideAccess: false,
-    select: {
-      title: true,
-      slug: true,
-      media: true,
-      price: true,
-      summary: true,
-      categories: true,
-      dietaryTags: true,
-      flags: true,
-    },
-    sort: sortValue,
-    where: {
-      and: [
-        { 'flags.isActive': { equals: true } },
-        ...(searchValue
-          ? [
-              {
-                or: [
-                  { title: { like: searchValue } },
-                  { summary: { like: searchValue } },
-                ],
-              },
-            ]
-          : []),
-        ...(categoryId
-          ? [
-              {
-                categories: {
-                  contains: categoryId,
+  let meals: any[] = []
+  let mealError: string | null = null
+  try {
+    const res = await payload.find({
+      collection: 'meals',
+      depth: 2,
+      draft: true,
+      overrideAccess: false,
+      select: {
+        title: true,
+        slug: true,
+        media: true,
+        price: true,
+        summary: true,
+        categories: true,
+        dietaryTags: true,
+        flags: true,
+      },
+      sort: sortValue,
+      where: {
+        and: [
+          { 'flags.isActive': { equals: true } },
+          ...(searchValue
+            ? [
+                {
+                  or: [
+                    { title: { like: searchValue } },
+                    { summary: { like: searchValue } },
+                  ],
                 },
-              },
-            ]
-          : []),
-        ...(tagId
-          ? [
-              {
-                dietaryTags: {
-                  contains: tagId,
+              ]
+            : []),
+          ...(categoryId
+            ? [
+                {
+                  categories: {
+                    contains: categoryId,
+                  },
                 },
-              },
-            ]
-          : []),
-      ],
-    },
-  })
+              ]
+            : []),
+          ...(tagId
+            ? [
+                {
+                  dietaryTags: {
+                    contains: tagId,
+                  },
+                },
+              ]
+            : []),
+        ],
+      },
+    })
+    meals = res.docs || []
+  } catch (err: any) {
+    mealError = 'Unable to load meals right now.'
+    console.error(err)
+  }
 
-  const resultsText = meals.docs.length > 1 ? 'results' : 'result'
+  const resultsText = meals.length > 1 ? 'results' : 'result'
 
   return (
     <div>
+      {mealError ? <p className="mb-4 text-red-500 text-sm">{mealError}</p> : null}
+
       {searchValue ? (
         <p className="mb-4">
-          {meals.docs?.length === 0
+          {meals.length === 0
             ? 'There are no meals that match '
-            : `Showing ${meals.docs.length} ${resultsText} for `}
+            : `Showing ${meals.length} ${resultsText} for `}
           <span className="font-bold">&quot;{searchValue}&quot;</span>
         </p>
       ) : null}
 
-      {!searchValue && meals.docs?.length === 0 && (
+      {!searchValue && meals.length === 0 && (
         <p className="mb-4">No meals found. Please try different filters.</p>
       )}
 
-      {meals?.docs.length > 0 ? (
+      {meals.length > 0 ? (
         <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {meals.docs.map((meal) => {
+          {meals.map((meal) => {
             return <MealGridItem key={meal.id} meal={meal} />
           })}
         </Grid>

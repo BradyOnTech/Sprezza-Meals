@@ -23,6 +23,9 @@ async function DietaryList() {
       <h3 className="text-xs mb-2 text-neutral-500 dark:text-neutral-400">Dietary</h3>
 
       <ul>
+        <li key="all-tags">
+          <DietaryTagItem tag={{ id: 'all', slug: '', name: 'All diets' } as any} />
+        </li>
         {tags.docs.map((tag) => {
           return (
             <li key={tag.id}>

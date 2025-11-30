@@ -27,6 +27,9 @@ async function CategoryList() {
       <h3 className="text-xs mb-2 text-neutral-500 dark:text-neutral-400">Category</h3>
 
       <ul>
+        <li key="all">
+          <CategoryItem category={{ id: 'all', slug: '', title: 'All meals' } as any} />
+        </li>
         <li key="plans">
           <CategoryItem category={{ id: 'plans', slug: 'plans', title: 'Meal Plans' } as any} />
         </li>
