@@ -12,7 +12,7 @@ import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { Suspense, useCallback, useEffect, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { cssVariables } from '@/cssVariables'
 import { CheckoutForm } from '@/components/forms/CheckoutForm'
@@ -29,6 +29,7 @@ import type { SavedAddress } from '@/components/addresses/AddressListing'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
+const TAX_RATE = 0.081 // Scottsdale, AZ approximate
 
 export const CheckoutPage: React.FC = () => {
   const { user } = useAuth()
@@ -49,6 +50,7 @@ export const CheckoutPage: React.FC = () => {
   const [billingAddressSameAsShipping, setBillingAddressSameAsShipping] = useState(true)
   const [isProcessingPayment, setProcessingPayment] = useState(false)
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
+  const [tipAmount, setTipAmount] = useState<number>(0)
 
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
 
@@ -126,99 +128,98 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [])
 
-  const initiatePaymentIntent = useCallback(
-    async (_paymentID: string) => {
-      try {
-        const lineItems =
-          cart?.items?.map((item) => {
-            const quantity = item.quantity || 1
-            const product = typeof item.product === 'object' ? item.product : undefined
-            const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
-            return {
-              title: product?.title || 'Item',
-              quantity,
-              unit_price: price,
-              total_price: price * quantity,
-              meal_slug: product?.slug,
-            }
-          }) || []
+  const subtotal = useMemo(() => {
+    return (
+      cart?.items?.reduce((sum, item) => {
+        const product = typeof item.product === 'object' ? item.product : undefined
+        const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+        const qty = item.quantity || 1
+        return sum + price * qty
+      }, 0) || 0
+    )
+  }, [cart?.items])
 
-        const subtotal =
-          lineItems.reduce((sum, li) => sum + (typeof li.total_price === 'number' ? li.total_price : 0), 0) || 0
-
-        // TODO: tax/tips; for now totals = subtotal
-        const total = subtotal
-
-        if (user) {
-          const { error: orderError, data: createdOrders } = await supabase
-            .from('orders')
-            .insert({
-              user_id: user.id,
-              customer_email: user.email ?? email,
-              status: 'pending',
-              total_amount: total,
-              items_count: lineItems.length,
-              shipping_address: billingAddressSameAsShipping ? shippingAddress ?? billingAddress : shippingAddress,
-              billing_address: billingAddress,
-              payment_intent_id: `mock_${nanoid(10)}`,
-            })
-            .select('id')
-            .limit(1)
-
-          if (orderError) {
-            throw orderError
+  const initiatePaymentIntent = useCallback(async (_paymentID: string) => {
+    try {
+      const lineItems =
+        cart?.items?.map((item) => {
+          const quantity = item.quantity || 1
+          const product = typeof item.product === 'object' ? item.product : undefined
+          const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+          return {
+            title: product?.title || 'Item',
+            quantity,
+            unit_price: price,
+            total_price: price * quantity,
+            meal_slug: product?.slug,
           }
+        }) || []
 
-          const orderRecord = createdOrders?.[0]
-          const orderDbId = orderRecord?.id
+      const tax = subtotal * TAX_RATE
+      const total = subtotal + tax + (tipAmount || 0)
 
-          if (orderDbId) {
-            const { error: itemsError } = await supabase
-              .from('order_items')
-              .insert(
-                lineItems.map((li) => ({
-                  order_id: orderDbId,
-                  title: li.title,
-                  quantity: li.quantity,
-                  unit_price: li.unit_price,
-                  total_price: li.total_price,
-                  meal_slug: li.meal_slug,
-                })),
-              )
+      if (user) {
+        const { error: orderError, data: createdOrders } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            customer_email: user.email ?? email,
+            status: 'pending',
+            total_amount: total,
+            tax_amount: tax,
+            tip_amount: tipAmount || 0,
+            items_count: lineItems.length,
+            shipping_address: billingAddressSameAsShipping ? shippingAddress ?? billingAddress : shippingAddress,
+            billing_address: billingAddress,
+            payment_intent_id: `mock_${crypto.randomUUID()}`,
+          })
+          .select('id')
+          .limit(1)
 
-            if (itemsError) {
-              throw itemsError
-            }
+        if (orderError) {
+          throw orderError
+        }
+
+        const orderRecord = createdOrders?.[0]
+        const orderDbId = orderRecord?.id
+
+        if (orderDbId) {
+          const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(
+              lineItems.map((li) => ({
+                order_id: orderDbId,
+                title: li.title,
+                quantity: li.quantity,
+                unit_price: li.unit_price,
+                total_price: li.total_price,
+                meal_slug: li.meal_slug,
+              })),
+            )
+
+          if (itemsError) {
+            throw itemsError
           }
         }
-
-        const mockPaymentData = {
-          clientSecret: `mock_secret_${nanoid(8)}`,
-        }
-
-        setPaymentData(mockPaymentData)
-      } catch (error) {
-        const errorData = error instanceof Error ? JSON.parse(error.message) : {}
-        let errorMessage = 'An error occurred while initiating payment.'
-
-        if (errorData?.cause?.code === 'OutOfStock') {
-          errorMessage = 'One or more items in your cart are out of stock.'
-        }
-
-        setError(errorMessage)
-        toast.error(errorMessage)
       }
-    },
-    [
-      billingAddress,
-      billingAddressSameAsShipping,
-      cart?.items,
-      email,
-      shippingAddress,
-      supabase,
-      user,
-    ],
-  )
+
+      const mockPaymentData = {
+        clientSecret: `mock_secret_${crypto.randomUUID().slice(0, 8)}`,
+      }
+
+      setPaymentData(mockPaymentData)
+    } catch (error) {
+      const errorData = error instanceof Error ? JSON.parse(error.message) : {}
+      let errorMessage = 'An error occurred while initiating payment.'
+
+      if (errorData?.cause?.code === 'OutOfStock') {
+        errorMessage = 'One or more items in your cart are out of stock.'
+      }
+
+      setError(errorMessage)
+      toast.error(errorMessage)
+    }
+  }, [billingAddress, billingAddressSameAsShipping, cart?.items, email, shippingAddress, supabase, tipAmount, user])
 
   if (!stripe) return null
 
@@ -392,16 +393,33 @@ export const CheckoutPage: React.FC = () => {
         )}
 
         {!paymentData && (
-          <Button
-            className="self-start"
-            disabled={!canGoToPayment}
-            onClick={(e) => {
-              e.preventDefault()
-              void initiatePaymentIntent('stripe')
-            }}
-          >
-            Go to payment
-          </Button>
+          <div className="flex flex-col gap-4">
+            <div className="w-full max-w-sm">
+              <Label htmlFor="tip">Add a tip (optional)</Label>
+              <Input
+                id="tip"
+                type="number"
+                min={0}
+                step={0.5}
+                value={tipAmount}
+                onChange={(e) => setTipAmount(Number(e.target.value) || 0)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Tip is added to your total. You can adjust this anytime before payment.
+              </p>
+            </div>
+
+            <Button
+              className="self-start"
+              disabled={!canGoToPayment}
+              onClick={(e) => {
+                e.preventDefault()
+                void initiatePaymentIntent('stripe')
+              }}
+            >
+              Go to payment
+            </Button>
+          </div>
         )}
 
         {!paymentData?.['clientSecret'] && error && (
@@ -476,6 +494,64 @@ export const CheckoutPage: React.FC = () => {
       {!cartIsEmpty && (
         <div className="basis-full lg:basis-1/3 lg:pl-8 p-8 border-none bg-primary/5 flex flex-col gap-8 rounded-lg">
           <h2 className="text-3xl font-medium">Your cart</h2>
+          <div className="rounded-lg border bg-white/70 dark:bg-black/30 p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>
+                <Price
+                  amount={
+                    (cart?.items || []).reduce((sum, item) => {
+                      const product = typeof item.product === 'object' ? item.product : undefined
+                      const price =
+                        product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+                      const qty = item.quantity || 1
+                      return sum + price * qty
+                    }, 0) || 0
+                  }
+                />
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Estimated tax ({(TAX_RATE * 100).toFixed(1)}%)</span>
+              <span>
+                <Price
+                  amount={
+                    ((cart?.items || []).reduce((sum, item) => {
+                      const product = typeof item.product === 'object' ? item.product : undefined
+                      const price =
+                        product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+                      const qty = item.quantity || 1
+                      return sum + price * qty
+                    }, 0) || 0) * TAX_RATE
+                  }
+                />
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tip</span>
+              <span>
+                <Price amount={tipAmount || 0} />
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-base font-semibold pt-2 border-t">
+              <span>Total</span>
+              <span>
+                <Price
+                  amount={
+                    ((cart?.items || []).reduce((sum, item) => {
+                      const product = typeof item.product === 'object' ? item.product : undefined
+                      const price =
+                        product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
+                      const qty = item.quantity || 1
+                      return sum + price * qty
+                    }, 0) || 0) *
+                      (1 + TAX_RATE) +
+                    (tipAmount || 0)
+                  }
+                />
+              </span>
+            </div>
+          </div>
           {cart?.items?.map((item, index) => {
             if (typeof item.product === 'object' && item.product) {
               const {

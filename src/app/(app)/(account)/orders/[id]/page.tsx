@@ -32,7 +32,7 @@ export default async function Order({ params, searchParams }: PageProps) {
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      'id, status, total_amount, currency, created_at, items_count, shipping_address, billing_address, payment_intent_id',
+      'id, status, total_amount, currency, created_at, items_count, shipping_address, billing_address, payment_intent_id, tax_amount, tip_amount',
     )
     .eq('id', Number(id))
     .eq('user_id', session.user.id)
@@ -105,6 +105,58 @@ export default async function Order({ params, searchParams }: PageProps) {
             <AddressDisplay address={order.billing_address} />
           </div>
         </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border p-4">
+          <h3 className="font-semibold mb-2">Payment summary</h3>
+          <dl className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Subtotal</dt>
+              <dd>{items && items.length ? <Price amount={items.reduce((sum, item) => sum + Number(item.total_price || 0), 0)} currencyCode="USD" /> : '—'}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Tax</dt>
+              <dd>
+                {typeof order.tax_amount === 'number' ? (
+                  <Price amount={Number(order.tax_amount)} currencyCode="USD" />
+                ) : (
+                  '—'
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Tip</dt>
+              <dd>
+                {typeof order.tip_amount === 'number' ? (
+                  <Price amount={Number(order.tip_amount)} currencyCode="USD" />
+                ) : (
+                  '—'
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between border-t pt-2 font-semibold">
+              <dt>Total</dt>
+              <dd>
+                {typeof order.total_amount === 'number' ? (
+                  <Price amount={Number(order.total_amount)} currencyCode="USD" />
+                ) : (
+                  '—'
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="rounded-lg border p-4">
+          <h3 className="font-semibold mb-2">Payment intent</h3>
+          <p className="text-sm text-muted-foreground break-all">
+            {order.payment_intent_id || 'Not created (mock)'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Stripe integration deferred; this order is stored with a mock intent ID.
+          </p>
+        </div>
+      </section>
       </div>
     </div>
   )
