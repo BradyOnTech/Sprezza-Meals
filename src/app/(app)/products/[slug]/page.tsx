@@ -3,6 +3,7 @@ import type { Media, Meal } from '@/payload-types'
 import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
 import { MealSummary } from '@/components/meal/MealSummary'
+import { FavoriteToggle } from '@/components/favorites/FavoriteToggle'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -115,10 +116,13 @@ export default async function MealPage({ params }: Args) {
             >
               {gallery.length ? <Gallery gallery={gallery} /> : null}
             </Suspense>
-          </div>
+        </div>
 
           <div className="basis-full lg:basis-1/2">
             <MealSummary meal={meal} />
+            <div className="mt-4 flex justify-end">
+              <FavoriteToggle mealId={meal.id} />
+            </div>
           </div>
         </div>
       </div>
