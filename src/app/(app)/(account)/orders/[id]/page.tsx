@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import { Price } from '@/components/Price'
 import { notFound } from 'next/navigation'
+import { AddressItem } from '@/components/addresses/AddressItem'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +29,9 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const { data: order, error } = await supabase
     .from('orders')
-    .select('id, status, total_amount, currency, created_at, items_count, shipping_address, billing_address, payment_intent_id')
+    .select(
+      'id, status, total_amount, currency, created_at, items_count, shipping_address, billing_address, payment_intent_id',
+    )
     .eq('id', Number(id))
     .eq('user_id', session.user.id)
     .maybeSingle()
@@ -93,28 +96,37 @@ export default async function Order({ params, searchParams }: PageProps) {
         <section className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border p-4">
             <h3 className="font-semibold mb-2">Shipping</h3>
-            {order.shipping_address ? (
-              <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {JSON.stringify(order.shipping_address, null, 2)}
-              </pre>
-            ) : (
-              <p className="text-sm text-muted-foreground">Not provided</p>
-            )}
+            <AddressDisplay address={order.shipping_address} />
           </div>
           <div className="rounded-lg border p-4">
             <h3 className="font-semibold mb-2">Billing</h3>
-            {order.billing_address ? (
-              <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {JSON.stringify(order.billing_address, null, 2)}
-              </pre>
-            ) : (
-              <p className="text-sm text-muted-foreground">Not provided</p>
-            )}
+            <AddressDisplay address={order.billing_address} />
           </div>
         </section>
       </div>
     </div>
   )
+}
+
+function AddressDisplay({ address }: { address: any }) {
+  if (!address) return <p className="text-sm text-muted-foreground">Not provided</p>
+
+  const formatted = {
+    id: address.id,
+    title: address.title || address.title,
+    firstName: address.first_name ?? address.firstName,
+    lastName: address.last_name ?? address.lastName,
+    company: address.company,
+    addressLine1: address.address_line1 ?? address.addressLine1,
+    addressLine2: address.address_line2 ?? address.addressLine2,
+    city: address.city,
+    state: address.state,
+    postalCode: address.postal_code ?? address.postalCode,
+    country: address.country,
+    phone: address.phone,
+  }
+
+  return <AddressItem address={formatted} hideActions />
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
