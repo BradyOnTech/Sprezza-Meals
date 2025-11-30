@@ -7,6 +7,8 @@ import { formatDateTime } from '@/utilities/formatDateTime'
 import { Price } from '@/components/Price'
 import { notFound } from 'next/navigation'
 import { AddressItem } from '@/components/addresses/AddressItem'
+import { Badge } from '@/components/ui/badge'
+import clsx from 'clsx'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,7 +63,7 @@ export default async function Order({ params, searchParams }: PageProps) {
           ) : (
             <p className="text-sm text-muted-foreground">Pending total</p>
           )}
-          <p className="text-sm text-muted-foreground">Status: {order.status}</p>
+          <StatusBadge status={order.status} />
         </div>
       </div>
 
@@ -127,6 +129,22 @@ function AddressDisplay({ address }: { address: any }) {
   }
 
   return <AddressItem address={formatted} hideActions />
+}
+
+function StatusBadge({ status }: { status?: string | null }) {
+  if (!status) return null
+  const tone =
+    status === 'paid'
+      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100'
+      : status === 'pending'
+        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100'
+        : 'bg-slate-200 text-slate-800 dark:bg-slate-800/60 dark:text-slate-100'
+
+  return (
+    <Badge className={clsx('uppercase tracking-[0.12em] text-xs font-semibold', tone)}>
+      {status}
+    </Badge>
+  )
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
