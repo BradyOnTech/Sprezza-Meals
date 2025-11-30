@@ -1,12 +1,12 @@
 'use client'
 import React, { useCallback, useMemo } from 'react'
 
-import { Category } from '@/payload-types'
+import { MealCategory } from '@/payload-types'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import clsx from 'clsx'
 
 type Props = {
-  category: Category
+  category: MealCategory
 }
 
 export const CategoryItem: React.FC<Props> = ({ category }) => {
@@ -15,8 +15,8 @@ export const CategoryItem: React.FC<Props> = ({ category }) => {
   const searchParams = useSearchParams()
 
   const isActive = useMemo(() => {
-    return searchParams.get('category') === String(category.id)
-  }, [category.id, searchParams])
+    return searchParams.get('category') === String(category.slug)
+  }, [category.slug, searchParams])
 
   const setQuery = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
@@ -24,13 +24,13 @@ export const CategoryItem: React.FC<Props> = ({ category }) => {
     if (isActive) {
       params.delete('category')
     } else {
-      params.set('category', String(category.id))
+      params.set('category', String(category.slug))
     }
 
     const newParams = params.toString()
 
     router.push(pathname + '?' + newParams)
-  }, [category.id, isActive, pathname, router, searchParams])
+  }, [category.slug, isActive, pathname, router, searchParams])
 
   return (
     <button

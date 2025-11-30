@@ -1,9 +1,8 @@
-import type { Media, Product } from '@/payload-types'
+import type { Media, Meal } from '@/payload-types'
 
-import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
-import { ProductDescription } from '@/components/product/ProductDescription'
+import { MealSummary } from '@/components/meal/MealSummary'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -22,31 +21,27 @@ type Args = {
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+  const meal = await queryMealBySlug({ slug })
 
-  if (!product) return notFound()
+  if (!meal) return notFound()
 
-  const gallery = product.gallery?.filter((item) => typeof item.image === 'object') || []
-
-  const metaImage = typeof product.meta?.image === 'object' ? product.meta?.image : undefined
-  const canIndex = product._status === 'published'
-
-  const seoImage = metaImage || (gallery.length ? (gallery[0]?.image as Media) : undefined)
+  const heroImage = typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
+  const canIndex = meal._status === 'published' && meal.flags?.isActive !== false
 
   return {
-    description: product.meta?.description || '',
-    openGraph: seoImage?.url
+    description: meal.summary || undefined,
+    openGraph: heroImage?.url
       ? {
           images: [
             {
-              alt: seoImage?.alt,
-              height: seoImage.height!,
-              url: seoImage?.url,
-              width: seoImage.width!,
+              alt: heroImage?.alt,
+              height: heroImage.height,
+              url: heroImage.url,
+              width: heroImage.width,
             },
           ],
         }
-      : null,
+      : undefined,
     robots: {
       follow: canIndex,
       googleBot: {
@@ -55,65 +50,52 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
       },
       index: canIndex,
     },
-    title: product.meta?.title || product.title,
+    title: meal.title,
   }
 }
 
-export default async function ProductPage({ params }: Args) {
+export default async function MealPage({ params }: Args) {
   const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+  const meal = await queryMealBySlug({ slug })
 
-  if (!product) return notFound()
+  if (!meal) return notFound()
 
-  const gallery =
-    product.gallery
+  const heroImage = typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
+
+  const galleryImages =
+    meal.media?.gallery
       ?.filter((item) => typeof item.image === 'object')
       .map((item) => ({
-        ...item,
         image: item.image as Media,
       })) || []
 
-  const metaImage = typeof product.meta?.image === 'object' ? product.meta?.image : undefined
-  const hasStock = product.enableVariants
-    ? product?.variants?.docs?.some((variant) => {
-        if (typeof variant !== 'object') return false
-        return variant.inventory && variant?.inventory > 0
-      })
-    : product.inventory! > 0
+  const gallery = heroImage ? [{ image: heroImage }, ...galleryImages] : galleryImages
 
-  let price = product.priceInUSD
-
-  if (product.enableVariants && product?.variants?.docs?.length) {
-    price = product?.variants?.docs?.reduce((acc, variant) => {
-      if (typeof variant === 'object' && variant?.priceInUSD && acc && variant?.priceInUSD > acc) {
-        return variant.priceInUSD
-      }
-      return acc
-    }, price)
-  }
-
-  const productJsonLd = {
-    name: product.title,
+  const mealJsonLd = {
+    name: meal.title,
     '@context': 'https://schema.org',
     '@type': 'Product',
-    description: product.description,
-    image: metaImage?.url,
+    description: meal.summary || '',
+    image: heroImage?.url,
     offers: {
-      '@type': 'AggregateOffer',
-      availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      price: price,
-      priceCurrency: 'usd',
+      '@type': 'Offer',
+      availability:
+        meal.flags?.isActive === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      price: meal.price,
+      priceCurrency: 'USD',
     },
   }
 
-  const relatedProducts =
-    product.relatedProducts?.filter((relatedProduct) => typeof relatedProduct === 'object') ?? []
+  const relatedMeals =
+    meal.relatedMeals?.filter(
+      (relatedMeal): relatedMeal is Meal => typeof relatedMeal === 'object',
+    ) ?? []
 
   return (
     <React.Fragment>
       <script
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productJsonLd),
+          __html: JSON.stringify(mealJsonLd),
         }}
         type="application/ld+json"
       />
@@ -121,7 +103,7 @@ export default async function ProductPage({ params }: Args) {
         <Button asChild variant="ghost" className="mb-4">
           <Link href="/shop">
             <ChevronLeftIcon />
-            All products
+            All meals
           </Link>
         </Button>
         <div className="flex flex-col gap-12 rounded-lg border p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary-foreground">
@@ -131,64 +113,65 @@ export default async function ProductPage({ params }: Args) {
                 <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
               }
             >
-              {Boolean(gallery?.length) && <Gallery gallery={gallery} />}
+              {gallery.length ? <Gallery gallery={gallery} /> : null}
             </Suspense>
           </div>
 
           <div className="basis-full lg:basis-1/2">
-            <ProductDescription product={product} />
+            <MealSummary meal={meal} />
           </div>
         </div>
       </div>
 
-      {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>}
-
-      {relatedProducts.length ? (
+      {relatedMeals.length ? (
         <div className="container">
-          <RelatedProducts products={relatedProducts as Product[]} />
+          <RelatedMeals meals={relatedMeals} />
         </div>
-      ) : (
-        <></>
-      )}
+      ) : null}
     </React.Fragment>
   )
 }
 
-function RelatedProducts({ products }: { products: Product[] }) {
-  if (!products.length) return null
+function RelatedMeals({ meals }: { meals: Meal[] }) {
+  if (!meals.length) return null
 
   return (
     <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
+      <h2 className="mb-4 text-2xl font-bold">Related Meals</h2>
       <ul className="flex w-full gap-4 overflow-x-auto pt-1">
-        {products.map((product) => (
-          <li
-            className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5"
-            key={product.id}
-          >
-            <Link className="relative h-full w-full" href={`/products/${product.slug}`}>
-              <GridTileImage
-                label={{
-                  amount: product.priceInUSD!,
-                  title: product.title,
-                }}
-                media={product.meta?.image as Media}
-              />
-            </Link>
-          </li>
-        ))}
+        {meals.map((meal) => {
+          const relatedImage =
+            typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
+
+          return (
+            <li
+              className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5"
+              key={meal.id}
+            >
+              <Link className="relative h-full w-full" href={`/products/${meal.slug}`}>
+                <GridTileImage
+                  label={{
+                    amount: meal.price,
+                    title: meal.title,
+                  }}
+                  media={relatedImage}
+                />
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
 }
 
-const queryProductBySlug = async ({ slug }: { slug: string }) => {
+const queryMealBySlug = async ({ slug }: { slug: string }) => {
   const { isEnabled: draft } = await draftMode()
 
   const payload = await getPayload({ config: configPromise })
 
   const result = await payload.find({
-    collection: 'products',
+    collection: 'meals',
     depth: 3,
     draft,
     limit: 1,
@@ -202,15 +185,8 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
           },
         },
         ...(draft ? [] : [{ _status: { equals: 'published' } }]),
+        ...(draft ? [] : [{ 'flags.isActive': { equals: true } }]),
       ],
-    },
-    populate: {
-      variants: {
-        title: true,
-        priceInUSD: true,
-        inventory: true,
-        options: true,
-      },
     },
   })
 

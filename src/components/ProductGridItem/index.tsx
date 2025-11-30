@@ -1,4 +1,4 @@
-import type { Product, Variant } from '@/payload-types'
+import type { Meal } from '@/payload-types'
 
 import Link from 'next/link'
 import React from 'react'
@@ -7,33 +7,16 @@ import { Media } from '@/components/Media'
 import { Price } from '@/components/Price'
 
 type Props = {
-  product: Partial<Product>
+  meal: Partial<Meal>
 }
 
-export const ProductGridItem: React.FC<Props> = ({ product }) => {
-  const { gallery, priceInUSD, title } = product
+export const MealGridItem: React.FC<Props> = ({ meal }) => {
+  const { media, price, title, summary } = meal
 
-  let price = priceInUSD
-
-  const variants = product.variants?.docs
-
-  if (variants && variants.length > 0) {
-    const variant = variants[0]
-    if (
-      variant &&
-      typeof variant === 'object' &&
-      variant?.priceInUSD &&
-      typeof variant.priceInUSD === 'number'
-    ) {
-      price = variant.priceInUSD
-    }
-  }
-
-  const image =
-    gallery?.[0]?.image && typeof gallery[0]?.image !== 'string' ? gallery[0]?.image : false
+  const image = media?.image && typeof media.image !== 'string' ? media.image : null
 
   return (
-    <Link className="relative inline-block h-full w-full group" href={`/products/${product.slug}`}>
+    <Link className="relative inline-block h-full w-full group" href={`/products/${meal.slug}`}>
       {image ? (
         <Media
           className={clsx(
@@ -48,15 +31,19 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
         />
       ) : null}
 
-      <div className="font-mono text-primary/50 group-hover:text-primary/100 flex justify-between items-center mt-4">
-        <div>{title}</div>
-
-        {typeof price === 'number' && (
-          <div className="">
-            <Price amount={price} />
-          </div>
-        )}
+      <div className="mt-4 flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="font-mono text-primary/50 group-hover:text-primary/100">{title}</div>
+          {typeof price === 'number' ? (
+            <Price amount={price} className="text-primary" />
+          ) : null}
+        </div>
+        {summary ? (
+          <p className="text-sm text-muted-foreground line-clamp-2">{summary}</p>
+        ) : null}
       </div>
     </Link>
   )
 }
+
+export const ProductGridItem = MealGridItem

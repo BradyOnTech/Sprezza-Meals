@@ -1,6 +1,6 @@
 'use client'
 
-import type { Media as MediaType, Product } from '@/payload-types'
+import type { Media as MediaType } from '@/payload-types'
 
 import { Media } from '@/components/Media'
 import { GridTileImage } from '@/components/Grid/tile'
@@ -11,7 +11,10 @@ import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/componen
 import { DefaultDocumentIDType } from 'payload'
 
 type Props = {
-  gallery: NonNullable<Product['gallery']>
+  gallery: {
+    image: MediaType
+    variantOption?: { id?: DefaultDocumentIDType } | DefaultDocumentIDType | null
+  }[]
 }
 
 export const Gallery: React.FC<Props> = ({ gallery }) => {
@@ -46,6 +49,8 @@ export const Gallery: React.FC<Props> = ({ gallery }) => {
       }
     }
   }, [searchParams, api, gallery])
+
+  if (!gallery?.length) return null
 
   return (
     <div>

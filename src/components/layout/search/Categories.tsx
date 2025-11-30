@@ -3,15 +3,25 @@ import { getPayload } from 'payload'
 import clsx from 'clsx'
 import React, { Suspense } from 'react'
 
-import { FilterList } from './filter'
 import { CategoryItem } from './Categories.client'
 
 async function CategoryList() {
   const payload = await getPayload({ config: configPromise })
 
   const categories = await payload.find({
-    collection: 'categories',
-    sort: 'title',
+    collection: 'meal-categories',
+    sort: 'displayOrder',
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+    },
+    where: {
+      and: [
+        { _status: { equals: 'published' } },
+        { isActive: { equals: true } },
+      ],
+    },
   })
 
   return (
