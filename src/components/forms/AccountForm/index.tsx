@@ -6,23 +6,26 @@ import { Message } from '@/components/Message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User } from '@/payload-types'
 import { useAuth } from '@/providers/Auth'
 import { useRouter } from 'next/navigation'
-import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 type FormData = {
   email: string
-  name: User['name']
+  name?: string | null
+  phone?: string | null
   password: string
   passwordConfirm: string
 }
 
 export const AccountForm: React.FC = () => {
   const { setUser, user } = useAuth()
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
   const [changePassword, setChangePassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const {
     formState: { errors, isLoading, isSubmitting, isDirty },
@@ -39,34 +42,67 @@ export const AccountForm: React.FC = () => {
 
   const onSubmit = useCallback(
     async (data: FormData) => {
-      if (user) {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/${user.id}`, {
-          // Make sure to include cookies with fetch
-          body: JSON.stringify(data),
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          method: 'PATCH',
-        })
+      setError(null)
 
-        if (response.ok) {
-          const json = await response.json()
-          setUser(json.doc)
-          toast.success('Successfully updated account.')
+      if (!user) return
+
+      if (changePassword) {
+        try {
+          if (data.password !== data.passwordConfirm) {
+            throw new Error('Passwords do not match.')
+          }
+
+          const { error } = await supabase.auth.updateUser({ password: data.password })
+          if (error) throw error
+          toast.success('Password updated.')
           setChangePassword(false)
           reset({
-            name: json.doc.name,
-            email: json.doc.email,
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
             password: '',
             passwordConfirm: '',
           })
-        } else {
-          toast.error('There was a problem updating your account.')
+        } catch (err: any) {
+          setError('Unable to update password. Please try again.')
+          toast.error('Unable to update password.')
         }
+        return
+      }
+
+      try {
+        const { error: upsertError } = await supabase.from('profiles').upsert(
+          {
+            user_id: user.id,
+            full_name: data.name,
+            phone: data.phone,
+          },
+          { onConflict: 'user_id' },
+        )
+
+        if (upsertError) {
+          throw upsertError
+        }
+
+        setUser({
+          ...user,
+          name: data.name || user.name,
+        })
+
+        toast.success('Profile updated.')
+        reset({
+          name: data.name,
+          phone: data.phone,
+          email: user.email || '',
+          password: '',
+          passwordConfirm: '',
+        })
+      } catch (err: any) {
+        setError('There was a problem updating your account.')
+        toast.error('There was a problem updating your account.')
       }
     },
-    [user, setUser, reset],
+    [user, setUser, reset, supabase, changePassword],
   )
 
   useEffect(() => {
@@ -80,17 +116,29 @@ export const AccountForm: React.FC = () => {
 
     // Once user is loaded, reset form to have default values
     if (user) {
-      reset({
-        name: user.name,
-        email: user.email,
-        password: '',
-        passwordConfirm: '',
-      })
+      const loadProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, phone')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        reset({
+          name: data?.full_name || user.name,
+          phone: data?.phone || '',
+          email: user.email || '',
+          password: '',
+          passwordConfirm: '',
+        })
+      }
+
+      void loadProfile()
     }
-  }, [user, router, reset, changePassword])
+  }, [user, router, reset, changePassword, supabase])
 
   return (
     <form className="max-w-xl" onSubmit={handleSubmit(onSubmit)}>
+      <Message className="mb-4" error={error || undefined} />
       {!changePassword ? (
         <Fragment>
           <div className="prose dark:prose-invert mb-8">
@@ -114,6 +162,7 @@ export const AccountForm: React.FC = () => {
                 Email Address
               </Label>
               <Input
+                disabled
                 id="email"
                 {...register('email', { required: 'Please provide an email.' })}
                 type="email"
@@ -131,6 +180,14 @@ export const AccountForm: React.FC = () => {
                 type="text"
               />
               {errors.name && <FormError message={errors.name.message} />}
+            </FormItem>
+
+            <FormItem>
+              <Label htmlFor="phone" className="mb-2">
+                Phone
+              </Label>
+              <Input id="phone" {...register('phone')} type="tel" />
+              {errors.phone && <FormError message={errors.phone.message} />}
             </FormItem>
           </div>
         </Fragment>

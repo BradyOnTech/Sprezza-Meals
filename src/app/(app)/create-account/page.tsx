@@ -3,19 +3,18 @@ import type { Metadata } from 'next'
 import { RenderParams } from '@/components/RenderParams'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import React from 'react'
-import { headers as getHeaders } from 'next/headers'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 
 import { CreateAccountForm } from '@/components/forms/CreateAccountForm'
 import { redirect } from 'next/navigation'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export default async function CreateAccount() {
-  const headers = await getHeaders()
-  const payload = await getPayload({ config: configPromise })
-  const { user } = await payload.auth({ headers })
+  const supabase = createSupabaseServerClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  if (user) {
+  if (session?.user) {
     redirect(`/account?warning=${encodeURIComponent('You are already logged in.')}`)
   }
 

@@ -6,6 +6,7 @@ import { Message } from '@/components/Message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useAuth } from '@/providers/Auth'
 import Link from 'next/link'
 import React, { Fragment, useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -15,6 +16,7 @@ type FormData = {
 }
 
 export const ForgotPasswordForm: React.FC = () => {
+  const { forgotPassword } = useAuth()
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
@@ -25,26 +27,16 @@ export const ForgotPasswordForm: React.FC = () => {
   } = useForm<FormData>()
 
   const onSubmit = useCallback(async (data: FormData) => {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/forgot-password`,
-      {
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      },
-    )
-
-    if (response.ok) {
+    try {
+      await forgotPassword(data)
       setSuccess(true)
       setError('')
-    } else {
+    } catch (err) {
       setError(
         'There was a problem while attempting to send you a password reset email. Please try again.',
       )
     }
-  }, [])
+  }, [forgotPassword])
 
   return (
     <Fragment>

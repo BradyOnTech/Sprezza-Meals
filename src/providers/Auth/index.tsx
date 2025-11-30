@@ -1,22 +1,18 @@
 'use client'
 
-import type { User } from '@/payload-types'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+type AuthUser = {
+  id: string
+  email?: string | null
+  name?: string | null
+}
 
-// eslint-disable-next-line no-unused-vars
-type ResetPassword = (args: {
-  password: string
-  passwordConfirm: string
-  token: string
-}) => Promise<void>
-
-type ForgotPassword = (args: { email: string }) => Promise<void> // eslint-disable-line no-unused-vars
-
-type Create = (args: { email: string; password: string; passwordConfirm: string }) => Promise<void> // eslint-disable-line no-unused-vars
-
-type Login = (args: { email: string; password: string }) => Promise<User> // eslint-disable-line no-unused-vars
-
+type ResetPassword = (args: { password: string; passwordConfirm: string; token?: string }) => Promise<void>
+type ForgotPassword = (args: { email: string }) => Promise<void>
+type Create = (args: { email: string; password: string; passwordConfirm: string }) => Promise<AuthUser | null>
+type Login = (args: { email: string; password: string }) => Promise<AuthUser> // eslint-disable-line no-unused-vars
 type Logout = () => Promise<void>
 
 type AuthContext = {
@@ -25,175 +21,132 @@ type AuthContext = {
   login: Login
   logout: Logout
   resetPassword: ResetPassword
-  setUser: (user: User | null) => void // eslint-disable-line no-unused-vars
+  setUser: (user: AuthUser | null) => void // eslint-disable-line no-unused-vars
   status: 'loggedIn' | 'loggedOut' | undefined
-  user?: User | null
+  user?: AuthUser | null
 }
 
 const Context = createContext({} as AuthContext)
 
+const mapUser = (supabaseUser: { id: string; email?: string | null; user_metadata?: any }): AuthUser => ({
+  id: supabaseUser.id,
+  email: supabaseUser.email,
+  name: supabaseUser.user_metadata?.full_name || supabaseUser.email || null,
+})
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>()
-
-  // used to track the single event of logging in or logging out
-  // useful for `useEffect` hooks that should only run once
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
+  const [user, setUser] = useState<AuthUser | null>()
   const [status, setStatus] = useState<'loggedIn' | 'loggedOut' | undefined>()
-  const create = useCallback<Create>(async (args) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/create`, {
-        body: JSON.stringify({
-          email: args.email,
-          password: args.password,
-          passwordConfirm: args.passwordConfirm,
-        }),
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      })
 
-      if (res.ok) {
-        const { data, errors } = await res.json()
-        if (errors) throw new Error(errors[0].message)
-        setUser(data?.loginUser?.user)
-        setStatus('loggedIn')
-      } else {
-        throw new Error('Invalid login')
-      }
-    } catch (e) {
-      throw new Error('An error occurred while attempting to login.')
-    }
-  }, [])
-
-  const login = useCallback<Login>(async (args) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/login`, {
-        body: JSON.stringify({
-          email: args.email,
-          password: args.password,
-        }),
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      })
-
-      if (res.ok) {
-        const { errors, user } = await res.json()
-        if (errors) throw new Error(errors[0].message)
-        setUser(user)
-        setStatus('loggedIn')
-        return user
+  const create = useCallback<Create>(
+    async (args) => {
+      const { email, password, passwordConfirm } = args
+      if (password !== passwordConfirm) {
+        throw new Error('Passwords do not match')
       }
 
-      throw new Error('Invalid login')
-    } catch (e) {
-      throw new Error('An error occurred while attempting to login.')
-    }
-  }, [])
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: email },
+          emailRedirectTo:
+            typeof window !== 'undefined'
+              ? `${window.location.origin}/account`
+              : process.env.NEXT_PUBLIC_SITE_URL,
+        },
+      })
+
+      if (error) {
+        throw error
+      }
+
+      const mapped = data.user ? mapUser(data.user) : null
+      if (mapped) {
+        setUser(mapped)
+        setStatus('loggedIn')
+      }
+
+      return mapped
+    },
+    [supabase],
+  )
+
+  const login = useCallback<Login>(
+    async (args) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: args.email,
+        password: args.password,
+      })
+
+      if (error || !data.user) {
+        throw error || new Error('Invalid login')
+      }
+
+      const mapped = mapUser(data.user)
+      setUser(mapped)
+      setStatus('loggedIn')
+      return mapped
+    },
+    [supabase],
+  )
 
   const logout = useCallback<Logout>(async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/logout`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      })
-
-      if (res.ok) {
-        setUser(null)
-        setStatus('loggedOut')
-      } else {
-        throw new Error('An error occurred while attempting to logout.')
-      }
-    } catch (e) {
-      throw new Error('An error occurred while attempting to logout.')
-    }
-  }, [])
+    await supabase.auth.signOut()
+    setUser(null)
+    setStatus('loggedOut')
+  }, [supabase])
 
   useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/me`, {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          method: 'GET',
-        })
-
-        if (res.ok) {
-          const { user: meUser } = await res.json()
-          setUser(meUser || null)
-          setStatus(meUser ? 'loggedIn' : undefined)
-        } else {
-          throw new Error('An error occurred while fetching your account.')
-        }
-      } catch (e) {
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      if (!error && data.session?.user) {
+        setUser(mapUser(data.session.user))
+        setStatus('loggedIn')
+      } else {
+        setStatus('loggedOut')
         setUser(null)
-        throw new Error('An error occurred while fetching your account.')
       }
     }
 
-    void fetchMe()
-  }, [])
+    void fetchSession()
+  }, [supabase])
 
-  const forgotPassword = useCallback<ForgotPassword>(async (args) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/forgot-password`, {
-        body: JSON.stringify({
-          email: args.email,
-        }),
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
+  const forgotPassword = useCallback<ForgotPassword>(
+    async (args) => {
+      const redirectTo =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/reset-password`
+          : `${process.env.NEXT_PUBLIC_SITE_URL || ''}/reset-password`
+
+      const { error } = await supabase.auth.resetPasswordForEmail(args.email, {
+        redirectTo,
       })
 
-      if (res.ok) {
-        const { data, errors } = await res.json()
-        if (errors) throw new Error(errors[0].message)
-        setUser(data?.loginUser?.user)
-      } else {
-        throw new Error('Invalid login')
+      if (error) {
+        throw error
       }
-    } catch (e) {
-      throw new Error('An error occurred while attempting to login.')
-    }
-  }, [])
+    },
+    [supabase],
+  )
 
-  const resetPassword = useCallback<ResetPassword>(async (args) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/reset-password`, {
-        body: JSON.stringify({
-          password: args.password,
-          passwordConfirm: args.passwordConfirm,
-          token: args.token,
-        }),
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
+  const resetPassword = useCallback<ResetPassword>(
+    async (args) => {
+      if (args.password !== args.passwordConfirm) {
+        throw new Error('Passwords do not match')
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: args.password,
       })
 
-      if (res.ok) {
-        const { data, errors } = await res.json()
-        if (errors) throw new Error(errors[0].message)
-        setUser(data?.loginUser?.user)
-        setStatus(data?.loginUser?.user ? 'loggedIn' : undefined)
-      } else {
-        throw new Error('Invalid login')
+      if (error) {
+        throw error
       }
-    } catch (e) {
-      throw new Error('An error occurred while attempting to login.')
-    }
-  }, [])
+    },
+    [supabase],
+  )
 
   return (
     <Context.Provider
@@ -213,6 +166,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   )
 }
 
-type UseAuth<T = User> = () => AuthContext // eslint-disable-line no-unused-vars
+type UseAuth<T = AuthUser> = () => AuthContext // eslint-disable-line no-unused-vars
 
 export const useAuth: UseAuth = () => useContext(Context)

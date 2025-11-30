@@ -64,7 +64,9 @@
     "stripe": "18.5.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "@payloadcms/db-postgres": "3.65.0"
+    "@payloadcms/db-postgres": "3.65.0",
+    "@supabase/supabase-js": "^2.48.0",
+    "@supabase/ssr": "^0.5.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

@@ -4,18 +4,17 @@ import { RenderParams } from '@/components/RenderParams'
 import Link from 'next/link'
 import React from 'react'
 
-import { headers as getHeaders } from 'next/headers'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 import { LoginForm } from '@/components/forms/LoginForm'
 import { redirect } from 'next/navigation'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export default async function Login() {
-  const headers = await getHeaders()
-  const payload = await getPayload({ config: configPromise })
-  const { user } = await payload.auth({ headers })
+  const supabase = createSupabaseServerClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  if (user) {
+  if (session?.user) {
     redirect(`/account?warning=${encodeURIComponent('You are already logged in.')}`)
   }
 
