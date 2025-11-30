@@ -59,6 +59,13 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { addItem } = useCart()
+  const optionMap = useMemo(() => {
+    const map = new Map<number, Category['options'][number]>()
+    categories.forEach((cat) => {
+      cat.options?.forEach((opt) => map.set(opt.id, opt))
+    })
+    return map
+  }, [categories])
 
   const optionIds = useMemo(
     () =>
@@ -244,16 +251,25 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
             const ok = validateSelections()
             if (!ok || !totals) return
             try {
-              await addItem({
-                // cart schema is still product-oriented; stash builder config in metadata
-                product: undefined as any,
-                metadata: {
-                  builder: {
-                    baseId: selectedBase,
-                    optionIds,
-                    totals,
-                  },
+              const base = bases.find((b) => b.id === selectedBase)
+              const selectedOptionDetails = optionIds
+                .map((id) => optionMap.get(id))
+                .filter(Boolean)
+              const metadata = {
+                builder: {
+                  base: { id: selectedBase, name: base?.name, price: base?.basePrice || 0 },
+                  options: selectedOptionDetails.map((opt) => ({
+                    id: opt!.id,
+                    name: opt!.name,
+                    priceAdjustment: opt!.priceAdjustment || 0,
+                  })),
+                  totals,
                 },
+              }
+              await addItem({
+                // cart schema is product-based; we stash builder config in metadata for now
+                product: `builder-${selectedBase}` as any,
+                metadata,
               })
             } catch (err) {
               setError('Unable to add to cart. Builder cart integration pending.')

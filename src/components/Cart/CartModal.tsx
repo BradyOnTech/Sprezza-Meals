@@ -38,6 +38,21 @@ export function CartModal() {
     return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
   }, [cart])
 
+  const fallbackTotal = useMemo(() => {
+    if (!cart?.items?.length) return 0
+    return cart.items.reduce((sum, item) => {
+      const product = item.product
+      const qty = item.quantity || 1
+      const builderPrice =
+        (item as any)?.metadata?.builder?.totals?.price && typeof (item as any).metadata.builder.totals.price === 'number'
+          ? (item as any).metadata.builder.totals.price
+          : 0
+      if (builderPrice) return sum + builderPrice * qty
+      if (typeof product === 'object' && product?.priceInUSD) return sum + product.priceInUSD * qty
+      return sum
+    }, 0)
+  }, [cart?.items])
+
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
@@ -61,8 +76,46 @@ export function CartModal() {
             <div className="flex flex-col justify-between w-full">
               <ul className="grow overflow-auto py-4">
                 {cart?.items?.map((item, i) => {
+                  const builder = (item as any)?.metadata?.builder
                   const product = item.product
                   const variant = item.variant
+
+                  if (builder) {
+                    const qty = item.quantity || 1
+                    const price = builder?.totals?.price || 0
+                    return (
+                      <li className="flex w-full flex-col" key={i}>
+                        <div className="relative flex w-full flex-row justify-between px-1 py-4">
+                          <div className="absolute z-40 -mt-2 ml-[55px]">
+                            <DeleteItemButton item={item} />
+                          </div>
+                          <div className="z-30 flex flex-row space-x-4 w-full">
+                            <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900" />
+                            <div className="flex flex-1 flex-col text-base">
+                              <span className="leading-tight font-semibold">Custom meal</span>
+                              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                Base: {builder.base?.name || 'Selected'} ·{' '}
+                                {builder.options?.map((opt: any) => opt.name).join(', ')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex h-16 flex-col justify-between">
+                            <Price
+                              amount={price}
+                              className="flex justify-end space-y-2 text-right text-sm"
+                            />
+                            <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
+                              <EditItemQuantityButton item={item} type="minus" />
+                              <p className="w-6 text-center">
+                                <span className="w-full text-sm">{qty}</span>
+                              </p>
+                              <EditItemQuantityButton item={item} type="plus" />
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    )
+                  }
 
                   if (typeof product !== 'object' || !item || !product || !product.slug)
                     return <React.Fragment key={i} />
@@ -164,15 +217,13 @@ export function CartModal() {
 
               <div className="px-4">
                 <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  {typeof cart?.subtotal === 'number' && (
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Total</p>
-                      <Price
-                        amount={cart?.subtotal}
-                        className="text-right text-base text-black dark:text-white"
-                      />
-                    </div>
-                  )}
+                  <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
+                    <p>Total</p>
+                    <Price
+                      amount={typeof cart?.subtotal === 'number' ? cart.subtotal : fallbackTotal}
+                      className="text-right text-base text-black dark:text-white"
+                    />
+                  </div>
 
                   <Button asChild>
                     <Link className="w-full" href="/checkout">
