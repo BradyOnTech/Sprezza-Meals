@@ -1,77 +1,35 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
+import type { CollectionSlug, File, GlobalSlug, Payload, PayloadRequest } from 'payload'
 
-import { contactFormData } from './contact-form'
-import { contactPageData } from './contact-page'
-import { productHatData } from './product-hat'
-import { productTshirtData, productTshirtVariant } from './product-tshirt'
-import { homePageData } from './home'
-import { imageHatData } from './image-hat'
-import { imageTshirtBlackData } from './image-tshirt-black'
-import { imageTshirtWhiteData } from './image-tshirt-white'
-import { imageHero1Data } from './image-hero-1'
-import { Address, Transaction, VariantOption } from '@/payload-types'
+type CreatedDoc<T> = T & { id: number | string }
 
-const collections: CollectionSlug[] = [
-  'categories',
+const placeholderPNGBase64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+
+const collectionsToClear: CollectionSlug[] = [
+  'meal-categories',
+  'dietary-tags',
+  'meal-bases',
+  'customization-categories',
+  'customization-options',
+  'meals',
+  'meal-plans',
+  'testimonials',
   'media',
   'pages',
-  'products',
-  'forms',
-  'form-submissions',
-  'variants',
-  'variantOptions',
-  'variantTypes',
-  'carts',
-  'transactions',
-  'addresses',
-  'orders',
 ]
 
-const categories = ['Accessories', 'T-Shirts', 'Hats']
+const globalsToClear: GlobalSlug[] = ['header', 'footer']
 
-const sizeVariantOptions = [
-  { label: 'Small', value: 'small' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Large', value: 'large' },
-  { label: 'X Large', value: 'xlarge' },
-]
-
-const colorVariantOptions = [
-  { label: 'Black', value: 'black' },
-  { label: 'White', value: 'white' },
-]
-
-const globals: GlobalSlug[] = ['header', 'footer']
-
-const baseAddressUSData: Transaction['billingAddress'] = {
-  title: 'Dr.',
-  firstName: 'Otto',
-  lastName: 'Octavius',
-  phone: '1234567890',
-  company: 'Oscorp',
-  addressLine1: '123 Main St',
-  addressLine2: 'Suite 100',
-  city: 'New York',
-  state: 'NY',
-  postalCode: '10001',
-  country: 'US',
+const makeFile = (name: string): File => {
+  const data = Buffer.from(placeholderPNGBase64, 'base64')
+  return {
+    name,
+    data,
+    mimetype: 'image/png',
+    size: data.byteLength,
+  }
 }
 
-const baseAddressUKData: Transaction['billingAddress'] = {
-  title: 'Mr.',
-  firstName: 'Oliver',
-  lastName: 'Twist',
-  phone: '1234567890',
-  addressLine1: '48 Great Portland St',
-  city: 'London',
-  postalCode: 'W1W 7ND',
-  country: 'GB',
-}
-
-// Next.js revalidation errors are normal when seeding the database without a server running
-// i.e. running `yarn seed` locally instead of using the admin UI within an active app
-// The app is not running to revalidate the pages and so the API routes are not available
-// These error messages can be ignored: `Error hitting revalidate route for...`
 export const seed = async ({
   payload,
   req,
@@ -79,22 +37,14 @@ export const seed = async ({
   payload: Payload
   req: PayloadRequest
 }): Promise<void> => {
-  payload.logger.info('Seeding database...')
+  payload.logger.info('Seeding Sprezza sample data...')
 
-  // we need to clear the media directory before seeding
-  // as well as the collections and globals
-  // this is because while `yarn seed` drops the database
-  // the custom `/api/seed` endpoint does not
-  payload.logger.info(`— Clearing collections and globals...`)
-
-  // clear the database
+  // Clear selected globals (site-settings is handled with final data below to satisfy required fields)
   await Promise.all(
-    globals.map((global) =>
+    globalsToClear.map((global) =>
       payload.updateGlobal({
         slug: global,
-        data: {
-          navItems: [],
-        },
+        data: {},
         depth: 0,
         context: {
           disableRevalidate: true,
@@ -103,495 +53,347 @@ export const seed = async ({
     ),
   )
 
-  for (const collection of collections) {
-    await payload.db.deleteMany({ collection, req, where: {} })
-    if (payload.collections[collection].config.versions) {
-      await payload.db.deleteVersions({ collection, req, where: {} })
+  // Clear selected collections (and versions if enabled)
+  for (const collection of collectionsToClear) {
+    if (payload.collections[collection]) {
+      await payload.db.deleteMany({ collection, req, where: {} })
+      if (payload.collections[collection].config.versions) {
+        await payload.db.deleteVersions({ collection, req, where: {} })
+      }
     }
   }
 
-  payload.logger.info(`— Seeding customer and customer data...`)
-
-  await payload.delete({
-    collection: 'users',
-    depth: 0,
-    where: {
-      email: {
-        equals: 'customer@example.com',
-      },
-    },
-  })
-
-  payload.logger.info(`— Seeding media...`)
-
-  const [imageHatBuffer, imageTshirtBlackBuffer, imageTshirtWhiteBuffer, heroBuffer] =
-    await Promise.all([
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/ecommerce/src/endpoints/seed/hat-logo.png',
-      ),
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/ecommerce/src/endpoints/seed/tshirt-black.png',
-      ),
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/ecommerce/src/endpoints/seed/tshirt-white.png',
-      ),
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-hero1.webp',
-      ),
-    ])
-
-  const [
-    customer,
-    imageHat,
-    imageTshirtBlack,
-    imageTshirtWhite,
-    imageHero,
-    accessoriesCategory,
-    tshirtsCategory,
-    hatsCategory,
-  ] = await Promise.all([
+  payload.logger.info('— Creating media')
+  const [heroImage, mealImage, testimonialPhoto] = await Promise.all([
     payload.create({
-      collection: 'users',
-      data: {
-        name: 'Customer',
-        email: 'customer@example.com',
-        password: 'password',
-        roles: ['customer'],
-      },
+      collection: 'media',
+      data: { alt: 'Hero placeholder' },
+      file: makeFile('hero.png'),
     }),
     payload.create({
       collection: 'media',
-      data: imageHatData,
-      file: imageHatBuffer,
+      data: { alt: 'Meal placeholder' },
+      file: makeFile('meal.png'),
     }),
     payload.create({
       collection: 'media',
-      data: imageTshirtBlackData,
-      file: imageTshirtBlackBuffer,
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageTshirtWhiteData,
-      file: imageTshirtWhiteBuffer,
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageHero1Data,
-      file: heroBuffer,
-    }),
-    ...categories.map((category) =>
-      payload.create({
-        collection: 'categories',
-        data: {
-          title: category,
-          slug: category,
-        },
-      }),
-    ),
-  ])
-
-  payload.logger.info(`— Seeding variant types and options...`)
-
-  const sizeVariantType = await payload.create({
-    collection: 'variantTypes',
-    data: {
-      name: 'size',
-      label: 'Size',
-    },
-  })
-
-  const sizeVariantOptionsResults: VariantOption[] = []
-
-  for (const option of sizeVariantOptions) {
-    const result = await payload.create({
-      collection: 'variantOptions',
-      data: {
-        ...option,
-        variantType: sizeVariantType.id,
-      },
-    })
-    sizeVariantOptionsResults.push(result)
-  }
-
-  const [small, medium, large, xlarge] = sizeVariantOptionsResults
-
-  const colorVariantType = await payload.create({
-    collection: 'variantTypes',
-    data: {
-      name: 'color',
-      label: 'Color',
-    },
-  })
-
-  const [black, white] = await Promise.all(
-    colorVariantOptions.map((option) => {
-      return payload.create({
-        collection: 'variantOptions',
-        data: {
-          ...option,
-          variantType: colorVariantType.id,
-        },
-      })
-    }),
-  )
-
-  payload.logger.info(`— Seeding products...`)
-
-  const productHat = await payload.create({
-    collection: 'products',
-    depth: 0,
-    data: productHatData({
-      galleryImage: imageHat,
-      metaImage: imageHat,
-      variantTypes: [colorVariantType],
-      categories: [hatsCategory],
-      relatedProducts: [],
-    }),
-  })
-
-  const productTshirt = await payload.create({
-    collection: 'products',
-    depth: 0,
-    data: productTshirtData({
-      galleryImages: [
-        { image: imageTshirtBlack, variantOption: black },
-        { image: imageTshirtWhite, variantOption: white },
-      ],
-      metaImage: imageTshirtBlack,
-      contentImage: imageHero,
-      variantTypes: [colorVariantType, sizeVariantType],
-      categories: [tshirtsCategory],
-      relatedProducts: [productHat],
-    }),
-  })
-
-  let hoodieID: number | string = productTshirt.id
-
-  if (payload.db.defaultIDType === 'text') {
-    hoodieID = `"${hoodieID}"`
-  }
-
-  const [
-    smallTshirtHoodieVariant,
-    mediumTshirtHoodieVariant,
-    largeTshirtHoodieVariant,
-    xlargeTshirtHoodieVariant,
-  ] = await Promise.all(
-    [small, medium, large, xlarge].map((variantOption) =>
-      payload.create({
-        collection: 'variants',
-        depth: 0,
-        data: productTshirtVariant({
-          product: productTshirt,
-          variantOptions: [variantOption, white],
-        }),
-      }),
-    ),
-  )
-
-  await Promise.all(
-    [small, medium, large, xlarge].map((variantOption) =>
-      payload.create({
-        collection: 'variants',
-        depth: 0,
-        data: productTshirtVariant({
-          product: productTshirt,
-          variantOptions: [variantOption, black],
-          ...(variantOption.value === 'medium' ? { inventory: 0 } : {}),
-        }),
-      }),
-    ),
-  )
-
-  payload.logger.info(`— Seeding contact form...`)
-
-  const contactForm = await payload.create({
-    collection: 'forms',
-    depth: 0,
-    data: contactFormData(),
-  })
-
-  payload.logger.info(`— Seeding pages...`)
-
-  const [_, contactPage] = await Promise.all([
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: homePageData({
-        contentImage: imageHero,
-        metaImage: imageHat,
-      }),
-    }),
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: contactPageData({
-        contactForm: contactForm,
-      }),
+      data: { alt: 'Customer portrait placeholder' },
+      file: makeFile('testimonial.png'),
     }),
   ])
 
-  payload.logger.info(`— Seeding addresses...`)
-
-  const customerUSAddress = await payload.create({
-    collection: 'addresses',
-    depth: 0,
-    data: {
-      customer: customer.id,
-      ...(baseAddressUSData as Address),
-    },
-  })
-
-  const customerUKAddress = await payload.create({
-    collection: 'addresses',
-    depth: 0,
-    data: {
-      customer: customer.id,
-      ...(baseAddressUKData as Address),
-    },
-  })
-
-  payload.logger.info(`— Seeding transactions...`)
-
-  const pendingTransaction = await payload.create({
-    collection: 'transactions',
-    data: {
-      currency: 'USD',
-      customer: customer.id,
-      paymentMethod: 'stripe',
-      stripe: {
-        customerID: 'cus_123',
-        paymentIntentID: 'pi_123',
+  payload.logger.info('— Creating meal categories')
+  const [bowlsCategory, tacosCategory] = await Promise.all([
+    payload.create({
+      collection: 'meal-categories',
+      data: {
+        title: 'Bowls',
+        description: 'Hearty bowls built for protein-first eaters.',
+        slug: 'bowls',
+        isFeatured: true,
+        displayOrder: 1,
       },
-      status: 'pending',
-      billingAddress: baseAddressUSData,
-    },
-  })
-
-  const succeededTransaction = await payload.create({
-    collection: 'transactions',
-    data: {
-      currency: 'USD',
-      customer: customer.id,
-      paymentMethod: 'stripe',
-      stripe: {
-        customerID: 'cus_123',
-        paymentIntentID: 'pi_123',
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'meal-categories',
+      data: {
+        title: 'Tacos',
+        description: 'Street-style tacos with Scottsdale flair.',
+        slug: 'tacos',
+        isFeatured: true,
+        displayOrder: 2,
       },
-      status: 'succeeded',
-      billingAddress: baseAddressUSData,
-    },
-  })
+    }) as Promise<CreatedDoc<any>>,
+  ])
 
-  let succeededTransactionID: number | string = succeededTransaction.id
+  payload.logger.info('— Creating dietary tags')
+  const [highProteinTag, glutenFreeTag] = await Promise.all([
+    payload.create({
+      collection: 'dietary-tags',
+      data: { name: 'High Protein', description: '35g+ protein per serving', slug: 'high-protein' },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'dietary-tags',
+      data: { name: 'Gluten Free', description: 'No gluten-containing ingredients', slug: 'gluten-free' },
+    }) as Promise<CreatedDoc<any>>,
+  ])
 
-  if (payload.db.defaultIDType === 'text') {
-    succeededTransactionID = `"${succeededTransactionID}"`
-  }
+  payload.logger.info('— Creating meal bases')
+  const [cilantroRiceBase, cauliflowerRiceBase] = await Promise.all([
+    payload.create({
+      collection: 'meal-bases',
+      data: {
+        name: 'Cilantro Lime Rice',
+        slug: 'cilantro-lime-rice',
+        description: 'Jasmine rice with citrus and herbs.',
+        basePrice: 0,
+        weight: 200,
+        weightUnit: 'g',
+        foodType: 'jasmine rice',
+        nutrition: { calories: 260, carbs: 55, protein: 5, fat: 2 },
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'meal-bases',
+      data: {
+        name: 'Cauliflower Rice',
+        slug: 'cauliflower-rice',
+        description: 'Low-carb cauliflower rice sautéed with garlic.',
+        basePrice: 1.5,
+        weight: 200,
+        weightUnit: 'g',
+        foodType: 'cauliflower rice',
+        nutrition: { calories: 80, carbs: 12, protein: 5, fat: 3 },
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+  ])
 
-  payload.logger.info(`— Seeding carts...`)
+  payload.logger.info('— Creating customization categories')
+  const [proteinCategory, toppingsCategory, sauceCategory] = await Promise.all([
+    payload.create({
+      collection: 'customization-categories',
+      data: {
+        name: 'Protein',
+        slug: 'protein',
+        displayOrder: 1,
+        minSelections: 1,
+        maxSelections: 1,
+        isRequired: true,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'customization-categories',
+      data: {
+        name: 'Toppings',
+        slug: 'toppings',
+        displayOrder: 2,
+        minSelections: 0,
+        maxSelections: 3,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'customization-categories',
+      data: {
+        name: 'Sauce',
+        slug: 'sauce',
+        displayOrder: 3,
+        minSelections: 0,
+        maxSelections: 2,
+      },
+    }) as Promise<CreatedDoc<any>>,
+  ])
 
-  // This cart is open as it's created now
-  const openCart = await payload.create({
-    collection: 'carts',
+  payload.logger.info('— Creating customization options')
+  const [chickenOption, steakOption, picoOption, cornOption, chipotleOption] = await Promise.all([
+    payload.create({
+      collection: 'customization-options',
+      data: {
+        name: 'Smoky Chicken',
+        slug: 'smoky-chicken',
+        category: proteinCategory.id,
+        priceAdjustment: 0,
+        weight: 140,
+        weightUnit: 'g',
+        nutrition: { calories: 220, protein: 40, fat: 6, carbs: 0 },
+        isDefault: true,
+        isActive: true,
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'customization-options',
+      data: {
+        name: 'Carne Asada',
+        slug: 'carne-asada',
+        category: proteinCategory.id,
+        priceAdjustment: 2,
+        weight: 140,
+        weightUnit: 'g',
+        nutrition: { calories: 250, protein: 36, fat: 10, carbs: 0 },
+        isActive: true,
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'customization-options',
+      data: {
+        name: 'Pico de Gallo',
+        slug: 'pico',
+        category: toppingsCategory.id,
+        priceAdjustment: 0,
+        weight: 40,
+        weightUnit: 'g',
+        nutrition: { calories: 10, carbs: 2 },
+        isDefault: true,
+        isActive: true,
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'customization-options',
+      data: {
+        name: 'Charred Corn',
+        slug: 'charred-corn',
+        category: toppingsCategory.id,
+        priceAdjustment: 0.5,
+        weight: 40,
+        weightUnit: 'g',
+        nutrition: { calories: 30, carbs: 7, protein: 1 },
+        isActive: true,
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'customization-options',
+      data: {
+        name: 'Chipotle Crema',
+        slug: 'chipotle-crema',
+        category: sauceCategory.id,
+        priceAdjustment: 0.5,
+        weight: 30,
+        weightUnit: 'g',
+        nutrition: { calories: 45, fat: 4, carbs: 2 },
+        isActive: true,
+        image: mealImage.id,
+      },
+    }) as Promise<CreatedDoc<any>>,
+  ])
+
+  payload.logger.info('— Creating meals')
+  const [smokyChickenBowl, carneAsadaTacos] = await Promise.all([
+    payload.create({
+      collection: 'meals',
+      data: {
+        title: 'Smoky Chicken Bowl',
+        slug: 'smoky-chicken-bowl',
+        summary: 'High-protein bowl with cilantro lime rice and bright toppings.',
+        categories: [bowlsCategory.id],
+        dietaryTags: [highProteinTag.id],
+        mealBase: cilantroRiceBase.id,
+        customizationCategories: [proteinCategory.id, toppingsCategory.id, sauceCategory.id],
+        price: 12.99,
+        prepTimeMinutes: 12,
+        servings: 1,
+        flags: { isFeatured: true, isActive: true },
+        nutrition: { calories: 520, protein: 44, carbs: 50, fat: 16 },
+        media: { image: mealImage.id },
+      },
+    }) as Promise<CreatedDoc<any>>,
+    payload.create({
+      collection: 'meals',
+      data: {
+        title: 'Carne Asada Tacos',
+        slug: 'carne-asada-tacos',
+        summary: 'Three street tacos with citrus-marinated steak.',
+        categories: [tacosCategory.id],
+        dietaryTags: [glutenFreeTag.id],
+        price: 14.5,
+        prepTimeMinutes: 10,
+        servings: 1,
+        flags: { isFeatured: true, isActive: true },
+        nutrition: { calories: 600, protein: 38, carbs: 48, fat: 24 },
+        media: { image: mealImage.id },
+      },
+    }) as Promise<CreatedDoc<any>>,
+  ])
+
+  payload.logger.info('— Creating meal plans')
+  await payload.create({
+    collection: 'meal-plans',
     data: {
-      customer: customer.id,
-      currency: 'USD',
+      title: 'Weekly Fuel Plan',
+      slug: 'weekly-fuel-plan',
+      tagline: 'Five meals for busy Scottsdale weeks.',
+      schedule: {
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      isFeatured: true,
+      isActive: true,
       items: [
         {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
+          dayOfWeek: 'monday',
+          mealTime: 'lunch',
+          meal: smokyChickenBowl.id,
+          displayOrder: 1,
+        },
+        {
+          dayOfWeek: 'wednesday',
+          mealTime: 'dinner',
+          meal: carneAsadaTacos.id,
+          displayOrder: 2,
         },
       ],
+      image: mealImage.id,
     },
   })
 
-  const oldTimestamp = new Date('2023-01-01T00:00:00Z').toISOString()
-
-  // Cart is abandoned because it was created long in the past
-  const abandonedCart = await payload.create({
-    collection: 'carts',
+  payload.logger.info('— Creating testimonials')
+  await payload.create({
+    collection: 'testimonials',
     data: {
-      currency: 'USD',
-      createdAt: oldTimestamp,
-      items: [
-        {
-          product: productHat.id,
-          quantity: 1,
-        },
-      ],
+      name: 'Taylor R.',
+      role: 'Arcadia',
+      quote: 'Sprezza keeps my macros on point and tastes like a night out.',
+      displayOrder: 1,
+      photo: testimonialPhoto.id,
     },
   })
 
-  // Cart is purchased because it has a purchasedAt date
-  const completedCart = await payload.create({
-    collection: 'carts',
-    data: {
-      customer: customer.id,
-      currency: 'USD',
-      purchasedAt: new Date().toISOString(),
-      subtotal: 7499,
-      items: [
-        {
-          product: productTshirt.id,
-          variant: smallTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-    },
-  })
-
-  let completedCartID: number | string = completedCart.id
-
-  if (payload.db.defaultIDType === 'text') {
-    completedCartID = `"${completedCartID}"`
-  }
-
-  payload.logger.info(`— Seeding orders...`)
-
-  const orderInCompleted = await payload.create({
-    collection: 'orders',
-    data: {
-      amount: 7499,
-      currency: 'USD',
-      customer: customer.id,
-      shippingAddress: baseAddressUSData,
-      items: [
-        {
-          product: productTshirt.id,
-          variant: smallTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-      status: 'completed',
-      transactions: [succeededTransaction.id],
-    },
-  })
-
-  const orderInProcessing = await payload.create({
-    collection: 'orders',
-    data: {
-      amount: 7499,
-      currency: 'USD',
-      customer: customer.id,
-      shippingAddress: baseAddressUSData,
-      items: [
-        {
-          product: productTshirt.id,
-          variant: smallTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-      status: 'processing',
-      transactions: [succeededTransaction.id],
-    },
-  })
-
-  payload.logger.info(`— Seeding globals...`)
-
+  payload.logger.info('— Updating globals')
   await Promise.all([
     payload.updateGlobal({
       slug: 'header',
       data: {
         navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Home',
-              url: '/',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Shop',
-              url: '/shop',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Account',
-              url: '/account',
-            },
-          },
+          { link: { type: 'custom', label: 'Home', url: '/' } },
+          { link: { type: 'custom', label: 'Meals', url: '/shop' } },
+          { link: { type: 'custom', label: 'Plans', url: '/shop?category=plans' } },
         ],
       },
+      depth: 0,
     }),
     payload.updateGlobal({
       slug: 'footer',
       data: {
         navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Admin',
-              url: '/admin',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Find my order',
-              url: '/find-order',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Source Code',
-              newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Payload',
-              newTab: true,
-              url: 'https://payloadcms.com/',
-            },
-          },
+          { link: { type: 'custom', label: 'Admin', url: '/admin' } },
+          { link: { type: 'custom', label: 'Find Order', url: '/find-order' } },
         ],
       },
+      depth: 0,
+    }),
+    payload.updateGlobal({
+      slug: 'site-settings',
+      data: {
+        heroTitle: 'Chef-prepped meals, Scottsdale fresh.',
+        heroSubtitle: 'Rotating weekly menus, custom bowls, and doorstep delivery.',
+        heroCtaLabel: 'Browse meals',
+        heroCtaHref: '/shop',
+        heroImage: heroImage.id,
+        howItWorks: [
+          { title: 'Pick your lineup', description: 'Meals and plans drop weekly.' },
+          { title: 'Customize', description: 'Protein-first builds with sauces and sides.' },
+          { title: 'We deliver', description: 'Scottsdale-only delivery windows.' },
+        ],
+        faq: [
+          {
+            question: 'Do you deliver outside Scottsdale?',
+            answer: 'We currently deliver within Scottsdale city limits.',
+          },
+          {
+            question: 'Are meals gluten free?',
+            answer: 'We mark GF options and avoid cross-contamination where possible.',
+          },
+        ],
+        contactEmail: 'hello@sprezza.com',
+        contactPhone: '480-555-1234',
+      },
+      depth: 0,
     }),
   ])
 
-  payload.logger.info('Seeded database successfully!')
-}
-
-async function fetchFileByURL(url: string): Promise<File> {
-  const res = await fetch(url, {
-    credentials: 'include',
-    method: 'GET',
-  })
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch file from ${url}, status: ${res.status}`)
-  }
-
-  const data = await res.arrayBuffer()
-
-  return {
-    name: url.split('/').pop() || `file-${Date.now()}`,
-    data: Buffer.from(data),
-    mimetype: `image/${url.split('.').pop()}`,
-    size: data.byteLength,
-  }
+  payload.logger.info('Seeded Sprezza sample data successfully.')
 }
