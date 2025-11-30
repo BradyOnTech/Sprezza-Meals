@@ -1,11 +1,24 @@
 'use client'
 
 import React from 'react'
-import type { Address } from '@/payload-types'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
 
 type Props = {
-  address: Partial<Omit<Address, 'country'>> & { country?: string } // Allow address to be partial and entirely optional as this is entirely for display purposes
+  address: {
+    id?: number | string
+    title?: string | null
+    firstName?: string | null
+    lastName?: string | null
+    company?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    phone?: string | null
+    isDefault?: boolean | null
+  } // Allow address to be partial and entirely optional as this is entirely for display purposes
   /**
    * Completely override the default actions
    */

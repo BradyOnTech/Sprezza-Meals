@@ -19,6 +19,7 @@ type Props = {
   buttonText?: string
   modalTitle?: string
   callback?: (address: Partial<Address>) => void
+  onSaved?: () => void
   skipSubmission?: boolean
   disabled?: boolean
 }
@@ -29,6 +30,7 @@ export const CreateAddressModal: React.FC<Props> = ({
   buttonText = 'Add a new address',
   modalTitle = 'Add a new address',
   callback,
+  onSaved,
   skipSubmission,
   disabled,
 }) => {
@@ -46,6 +48,9 @@ export const CreateAddressModal: React.FC<Props> = ({
 
     if (callback) {
       callback(data)
+    }
+    if (onSaved) {
+      onSaved()
     }
   }
 

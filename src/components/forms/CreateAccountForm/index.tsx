@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
+import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useCallback, useRef, useState } from 'react'
@@ -67,6 +68,14 @@ export const CreateAccountForm: React.FC = () => {
       </div>
 
       <Message error={error} />
+
+      <OAuthButtons />
+
+      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground my-6">
+        <span className="h-px w-full bg-border" />
+        <span>Or continue with email</span>
+        <span className="h-px w-full bg-border" />
+      </div>
 
       <div className="flex flex-col gap-8 mb-8">
         <FormItem>

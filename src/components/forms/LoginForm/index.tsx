@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
+import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useCallback, useRef } from 'react'
@@ -26,7 +27,7 @@ export const LoginForm: React.FC = () => {
   const [error, setError] = React.useState<null | string>(null)
 
   const {
-    formState: { errors, isLoading },
+    formState: { errors, isSubmitting },
     handleSubmit,
     register,
   } = useForm<FormData>()
@@ -48,6 +49,14 @@ export const LoginForm: React.FC = () => {
     <form className="" onSubmit={handleSubmit(onSubmit)}>
       <Message className="classes.message" error={error} />
       <div className="flex flex-col gap-8">
+        <OAuthButtons />
+
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="h-px w-full bg-border" />
+          <span>Or continue with email</span>
+          <span className="h-px w-full bg-border" />
+        </div>
+
         <FormItem>
           <Label htmlFor="email">Email</Label>
           <Input
@@ -82,8 +91,8 @@ export const LoginForm: React.FC = () => {
             Create an account
           </Link>
         </Button>
-        <Button className="grow" disabled={isLoading} size="lg" type="submit" variant="default">
-          {isLoading ? 'Processing' : 'Continue'}
+        <Button className="grow" disabled={isSubmitting} size="lg" type="submit" variant="default">
+          {isSubmitting ? 'Processing' : 'Continue'}
         </Button>
       </div>
     </form>

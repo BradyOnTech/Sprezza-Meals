@@ -3,9 +3,7 @@ import React, { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
 import { defaultCountries as supportedCountries } from '@payloadcms/plugin-ecommerce/client/react'
-import { Address, Config } from '@/payload-types'
 import {
   Select,
   SelectContent,
@@ -16,9 +14,12 @@ import {
 
 import { titles } from './constants'
 import { Button } from '@/components/ui/button'
-import { deepMergeSimple } from 'payload/shared'
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
+import { useAuth } from '@/providers/Auth'
+import { useRouter } from 'next/navigation'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 type AddressFormValues = {
   title?: string | null
@@ -35,9 +36,9 @@ type AddressFormValues = {
 }
 
 type Props = {
-  addressID?: Config['db']['defaultIDType']
-  initialData?: Omit<Address, 'country' | 'id' | 'updatedAt' | 'createdAt'> & { country?: string }
-  callback?: (data: Partial<Address>) => void
+  addressID?: number | string
+  initialData?: Partial<AddressFormValues>
+  callback?: (data: Partial<AddressFormValues>) => void
   /**
    * If true, the form will not submit to the API.
    */
@@ -50,6 +51,9 @@ export const AddressForm: React.FC<Props> = ({
   callback,
   skipSubmission,
 }) => {
+  const { user } = useAuth()
+  const router = useRouter()
+  const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
   const {
     register,
     handleSubmit,
@@ -59,25 +63,52 @@ export const AddressForm: React.FC<Props> = ({
     defaultValues: initialData,
   })
 
-  const { createAddress, updateAddress } = useAddresses()
-
   const onSubmit = useCallback(
     async (data: AddressFormValues) => {
-      const newData = deepMergeSimple(initialData || {}, data)
-
-      if (!skipSubmission) {
-        if (addressID) {
-          await updateAddress(addressID, newData)
-        } else {
-          await createAddress(newData)
-        }
+      if (!user) {
+        router.push('/login')
+        return
       }
 
-      if (callback) {
-        callback(newData)
+      const payload = {
+        user_id: user.id,
+        title: data.title,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        company: data.company,
+        address_line1: data.addressLine1,
+        address_line2: data.addressLine2,
+        city: data.city,
+        state: data.state,
+        postal_code: data.postalCode,
+        country: data.country,
+        phone: data.phone,
+      }
+
+      try {
+        if (!skipSubmission) {
+          if (addressID) {
+            const { error } = await supabase
+              .from('addresses')
+              .update(payload)
+              .eq('id', addressID)
+              .eq('user_id', user.id)
+            if (error) throw error
+          } else {
+            const { error } = await supabase.from('addresses').insert(payload)
+            if (error) throw error
+          }
+        }
+
+        if (callback) {
+          callback(data)
+        }
+        toast.success('Address saved.')
+      } catch (error) {
+        toast.error('Unable to save address. Please try again.')
       }
     },
-    [initialData, skipSubmission, callback, addressID, updateAddress, createAddress],
+    [skipSubmission, callback, addressID, supabase, user, router],
   )
 
   return (
