@@ -17,11 +17,20 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from '@/collections/Categories'
+import { CustomizationCategories } from '@/collections/CustomizationCategories'
+import { CustomizationOptions } from '@/collections/CustomizationOptions'
+import { DietaryTags } from '@/collections/DietaryTags'
+import { MealBases } from '@/collections/MealBases'
+import { MealCategories } from '@/collections/MealCategories'
+import { MealPlans } from '@/collections/MealPlans'
+import { Meals } from '@/collections/Meals'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
+import { Testimonials } from '@/collections/Testimonials'
 import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
+import { SiteSettings } from '@/globals/SiteSettings'
 import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
@@ -39,7 +48,20 @@ export default buildConfig({
     },
     user: Users.slug,
   },
-  collections: [Users, Pages, Categories, Media],
+  collections: [
+    Users,
+    Pages,
+    MealCategories,
+    DietaryTags,
+    MealBases,
+    CustomizationCategories,
+    CustomizationOptions,
+    Meals,
+    MealPlans,
+    Testimonials,
+    Categories,
+    Media,
+  ],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
@@ -82,7 +104,7 @@ export default buildConfig({
   }),
   //email: nodemailerAdapter(),
   endpoints: [],
-  globals: [Header, Footer],
+  globals: [Header, Footer, SiteSettings],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

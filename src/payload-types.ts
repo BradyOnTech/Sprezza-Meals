@@ -74,6 +74,14 @@ export interface Config {
   collections: {
     users: User;
     pages: Page;
+    'meal-categories': MealCategory;
+    'dietary-tags': DietaryTag;
+    'meal-bases': MealBase;
+    'customization-categories': CustomizationCategory;
+    'customization-options': CustomizationOption;
+    meals: Meal;
+    'meal-plans': MealPlan;
+    testimonials: Testimonial;
     categories: Category;
     media: Media;
     forms: Form;
@@ -107,6 +115,14 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    'meal-categories': MealCategoriesSelect<false> | MealCategoriesSelect<true>;
+    'dietary-tags': DietaryTagsSelect<false> | DietaryTagsSelect<true>;
+    'meal-bases': MealBasesSelect<false> | MealBasesSelect<true>;
+    'customization-categories': CustomizationCategoriesSelect<false> | CustomizationCategoriesSelect<true>;
+    'customization-options': CustomizationOptionsSelect<false> | CustomizationOptionsSelect<true>;
+    meals: MealsSelect<false> | MealsSelect<true>;
+    'meal-plans': MealPlansSelect<false> | MealPlansSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -131,10 +147,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'site-settings': SiteSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -1018,6 +1036,294 @@ export interface Address {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-categories".
+ */
+export interface MealCategory {
+  id: number;
+  title: string;
+  description?: string | null;
+  /**
+   * Optional icon name or emoji to display with the category.
+   */
+  icon?: string | null;
+  displayOrder?: number | null;
+  isFeatured?: boolean | null;
+  isActive?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dietary-tags".
+ */
+export interface DietaryTag {
+  id: number;
+  name: string;
+  description?: string | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-bases".
+ */
+export interface MealBase {
+  id: number;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  description?: string | null;
+  basePrice: number;
+  weight?: number | null;
+  weightUnit?: ('g' | 'oz' | 'lb') | null;
+  /**
+   * Used for nutrition lookup, e.g. jasmine rice, cauliflower rice.
+   */
+  foodType?: string | null;
+  useAutoNutrition?: boolean | null;
+  nutrition?: {
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+    sugar?: number | null;
+  };
+  isActive?: boolean | null;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-categories".
+ */
+export interface CustomizationCategory {
+  id: number;
+  name: string;
+  description?: string | null;
+  displayOrder?: number | null;
+  /**
+   * Optional: set a minimum selections rule for this category.
+   */
+  minSelections?: number | null;
+  /**
+   * Optional: set a maximum selections rule for this category.
+   */
+  maxSelections?: number | null;
+  isRequired?: boolean | null;
+  isActive?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-options".
+ */
+export interface CustomizationOption {
+  id: number;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  category: number | CustomizationCategory;
+  description?: string | null;
+  priceAdjustment: number;
+  weight?: number | null;
+  weightUnit?: ('g' | 'oz' | 'lb') | null;
+  /**
+   * Used for nutrition lookup, e.g. chicken breast, rice, black beans.
+   */
+  foodType?: string | null;
+  useAutoNutrition?: boolean | null;
+  nutrition?: {
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+    sugar?: number | null;
+  };
+  isDefault?: boolean | null;
+  isActive?: boolean | null;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meals".
+ */
+export interface Meal {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  summary?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  ingredients?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  categories: (number | MealCategory)[];
+  dietaryTags?: (number | DietaryTag)[] | null;
+  /**
+   * Optional base to pair with customizations.
+   */
+  mealBase?: (number | null) | MealBase;
+  /**
+   * Limit builder options for this meal (otherwise use all active categories).
+   */
+  customizationCategories?: (number | CustomizationCategory)[] | null;
+  price: number;
+  prepTimeMinutes?: number | null;
+  servings?: number | null;
+  availability?: {
+    startDate?: string | null;
+    endDate?: string | null;
+  };
+  flags?: {
+    isFeatured?: boolean | null;
+    isActive?: boolean | null;
+  };
+  nutrition?: {
+    useAutoNutrition?: boolean | null;
+    weight?: number | null;
+    weightUnit?: ('g' | 'oz' | 'lb') | null;
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+    sugar?: number | null;
+  };
+  media: {
+    image: number | Media;
+    gallery?:
+      | {
+          image: number | Media;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  relatedMeals?: (number | Meal)[] | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-plans".
+ */
+export interface MealPlan {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  tagline?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  schedule: {
+    startDate: string;
+    endDate: string;
+  };
+  isFeatured?: boolean | null;
+  isActive?: boolean | null;
+  items?:
+    | {
+        dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+        mealTime: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+        meal: number | Meal;
+        notes?: string | null;
+        displayOrder?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  name: string;
+  /**
+   * Optional role, location, or company.
+   */
+  role?: string | null;
+  quote: string;
+  displayOrder?: number | null;
+  photo?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1064,6 +1370,38 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'meal-categories';
+        value: number | MealCategory;
+      } | null)
+    | ({
+        relationTo: 'dietary-tags';
+        value: number | DietaryTag;
+      } | null)
+    | ({
+        relationTo: 'meal-bases';
+        value: number | MealBase;
+      } | null)
+    | ({
+        relationTo: 'customization-categories';
+        value: number | CustomizationCategory;
+      } | null)
+    | ({
+        relationTo: 'customization-options';
+        value: number | CustomizationOption;
+      } | null)
+    | ({
+        relationTo: 'meals';
+        value: number | Meal;
+      } | null)
+    | ({
+        relationTo: 'meal-plans';
+        value: number | MealPlan;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
       } | null)
     | ({
         relationTo: 'categories';
@@ -1353,6 +1691,227 @@ export interface FormBlockSelect<T extends boolean = true> {
   introContent?: T;
   id?: T;
   blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-categories_select".
+ */
+export interface MealCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  icon?: T;
+  displayOrder?: T;
+  isFeatured?: T;
+  isActive?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dietary-tags_select".
+ */
+export interface DietaryTagsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-bases_select".
+ */
+export interface MealBasesSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  description?: T;
+  basePrice?: T;
+  weight?: T;
+  weightUnit?: T;
+  foodType?: T;
+  useAutoNutrition?: T;
+  nutrition?:
+    | T
+    | {
+        calories?: T;
+        protein?: T;
+        carbs?: T;
+        fat?: T;
+        fiber?: T;
+        sugar?: T;
+      };
+  isActive?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-categories_select".
+ */
+export interface CustomizationCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  displayOrder?: T;
+  minSelections?: T;
+  maxSelections?: T;
+  isRequired?: T;
+  isActive?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-options_select".
+ */
+export interface CustomizationOptionsSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  category?: T;
+  description?: T;
+  priceAdjustment?: T;
+  weight?: T;
+  weightUnit?: T;
+  foodType?: T;
+  useAutoNutrition?: T;
+  nutrition?:
+    | T
+    | {
+        calories?: T;
+        protein?: T;
+        carbs?: T;
+        fat?: T;
+        fiber?: T;
+        sugar?: T;
+      };
+  isDefault?: T;
+  isActive?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meals_select".
+ */
+export interface MealsSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  summary?: T;
+  description?: T;
+  ingredients?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  categories?: T;
+  dietaryTags?: T;
+  mealBase?: T;
+  customizationCategories?: T;
+  price?: T;
+  prepTimeMinutes?: T;
+  servings?: T;
+  availability?:
+    | T
+    | {
+        startDate?: T;
+        endDate?: T;
+      };
+  flags?:
+    | T
+    | {
+        isFeatured?: T;
+        isActive?: T;
+      };
+  nutrition?:
+    | T
+    | {
+        useAutoNutrition?: T;
+        weight?: T;
+        weightUnit?: T;
+        calories?: T;
+        protein?: T;
+        carbs?: T;
+        fat?: T;
+        fiber?: T;
+        sugar?: T;
+      };
+  media?:
+    | T
+    | {
+        image?: T;
+        gallery?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
+      };
+  relatedMeals?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-plans_select".
+ */
+export interface MealPlansSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  tagline?: T;
+  description?: T;
+  schedule?:
+    | T
+    | {
+        startDate?: T;
+        endDate?: T;
+      };
+  isFeatured?: T;
+  isActive?: T;
+  items?:
+    | T
+    | {
+        dayOfWeek?: T;
+        mealTime?: T;
+        meal?: T;
+        notes?: T;
+        displayOrder?: T;
+        id?: T;
+      };
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  quote?: T;
+  displayOrder?: T;
+  photo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1830,6 +2389,41 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  heroTitle: string;
+  heroSubtitle?: string | null;
+  heroCtaLabel?: string | null;
+  heroCtaHref?: string | null;
+  heroImage?: (number | null) | Media;
+  howItWorks?:
+    | {
+        title: string;
+        description?: string | null;
+        /**
+         * Optional icon name or emoji.
+         */
+        icon?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  faq?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1870,6 +2464,38 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  heroTitle?: T;
+  heroSubtitle?: T;
+  heroCtaLabel?: T;
+  heroCtaHref?: T;
+  heroImage?: T;
+  howItWorks?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        icon?: T;
+        id?: T;
+      };
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  contactEmail?: T;
+  contactPhone?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
