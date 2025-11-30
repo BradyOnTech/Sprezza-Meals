@@ -7,7 +7,7 @@ import { Price } from '@/components/Price'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Message } from '@/components/Message'
-import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
+import { useBuilderCart } from '@/providers/BuilderCart'
 
 type Base = {
   id: number
@@ -58,7 +58,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
-  const { addItem } = useCart()
+  const { addItem } = useBuilderCart()
   const optionMap = useMemo(() => {
     const map = new Map<number, Category['options'][number]>()
     categories.forEach((cat) => {
@@ -255,28 +255,21 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
               const selectedOptionDetails = optionIds
                 .map((id) => optionMap.get(id))
                 .filter(Boolean)
-              const metadata = {
-                builder: {
-                  base: { id: selectedBase, name: base?.name, price: base?.basePrice || 0 },
-                  options: selectedOptionDetails.map((opt) => ({
-                    id: opt!.id,
-                    name: opt!.name,
-                    priceAdjustment: opt!.priceAdjustment || 0,
-                  })),
-                  totals,
-                },
-              }
               await addItem({
-                // cart schema is product-based; we stash builder config in metadata for now
-                product: `builder-${selectedBase}` as any,
-                metadata,
+                base: { id: selectedBase, name: base?.name, price: base?.basePrice || 0 },
+                options: selectedOptionDetails.map((opt) => ({
+                  id: opt!.id,
+                  name: opt!.name,
+                  priceAdjustment: opt!.priceAdjustment || 0,
+                })),
+                totals,
               })
             } catch (err) {
-              setError('Unable to add to cart. Builder cart integration pending.')
+              setError('Unable to add to cart.')
             }
           }}
         >
-          Add to cart (stub)
+          Add to cart
         </Button>
       </div>
     </div>

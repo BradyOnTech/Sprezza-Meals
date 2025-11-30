@@ -26,6 +26,7 @@ import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { SavedAddress } from '@/components/addresses/AddressListing'
+import { useBuilderCart } from '@/providers/BuilderCart'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
@@ -35,6 +36,7 @@ export const CheckoutPage: React.FC = () => {
   const { user } = useAuth()
   const router = useRouter()
   const { cart } = useCart()
+  const { items: builderItems, clear: clearBuilderCart } = useBuilderCart()
   const [error, setError] = useState<null | string>(null)
   const { theme } = useTheme()
   /**
@@ -52,7 +54,7 @@ export const CheckoutPage: React.FC = () => {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
   const [tipAmount, setTipAmount] = useState<number>(0)
 
-  const cartIsEmpty = !cart || !cart.items || !cart.items.length
+  const cartIsEmpty = (!cart || !cart.items || !cart.items.length) && builderItems.length === 0
 
   const canGoToPayment = Boolean(
     (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
@@ -130,18 +132,23 @@ export const CheckoutPage: React.FC = () => {
 
   const subtotal = useMemo(() => {
     return (
-      cart?.items?.reduce((sum, item) => {
+      (cart?.items?.reduce((sum, item) => {
+        const builder = (item as any)?.metadata?.builder
+        const qty = item.quantity || 1
+        if (builder?.totals?.price) {
+          return sum + Number(builder.totals.price) * qty
+        }
         const product = typeof item.product === 'object' ? item.product : undefined
         const price = product && typeof product.priceInUSD === 'number' ? product.priceInUSD : 0
-        const qty = item.quantity || 1
         return sum + price * qty
-      }, 0) || 0
+      }, 0) || 0) +
+      (builderItems?.reduce((sum, item) => sum + item.totals.price * (item.quantity || 1), 0) || 0)
     )
-  }, [cart?.items])
+  }, [cart?.items, builderItems])
 
   const initiatePaymentIntent = useCallback(async (_paymentID: string) => {
     try {
-      const lineItems =
+      const productLineItems =
         cart?.items?.map((item) => {
           const quantity = item.quantity || 1
           const product = typeof item.product === 'object' ? item.product : undefined
@@ -152,8 +159,21 @@ export const CheckoutPage: React.FC = () => {
             unit_price: price,
             total_price: price * quantity,
             meal_slug: product?.slug,
+            metadata: undefined,
           }
         }) || []
+
+      const builderLineItems =
+        builderItems?.map((item) => ({
+          title: 'Custom meal',
+          quantity: item.quantity || 1,
+          unit_price: Number(item.totals.price),
+          total_price: Number(item.totals.price) * (item.quantity || 1),
+          meal_slug: item.base?.name,
+          metadata: { builder: item },
+        })) || []
+
+      const lineItems = [...productLineItems, ...builderLineItems]
 
       const tax = subtotal * TAX_RATE
       const total = subtotal + tax + (tipAmount || 0)
@@ -183,34 +203,37 @@ export const CheckoutPage: React.FC = () => {
         const orderRecord = createdOrders?.[0]
         const orderDbId = orderRecord?.id
 
-        if (orderDbId) {
-          const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(
-              lineItems.map((li) => ({
+          if (orderDbId) {
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(
+                lineItems.map((li) => ({
                 order_id: orderDbId,
                 title: li.title,
                 quantity: li.quantity,
                 unit_price: li.unit_price,
                 total_price: li.total_price,
                 meal_slug: li.meal_slug,
-              })),
-            )
+                  metadata: li.metadata,
+                })),
+              )
 
-          if (itemsError) {
-            throw itemsError
+            if (itemsError) {
+              throw itemsError
           }
         }
       }
 
-      const mockPaymentData = {
-        clientSecret: `mock_secret_${crypto.randomUUID().slice(0, 8)}`,
-      }
+        const mockPaymentData = {
+          clientSecret: `mock_secret_${crypto.randomUUID().slice(0, 8)}`,
+        }
 
-      setPaymentData(mockPaymentData)
-    } catch (error) {
-      const errorData = error instanceof Error ? JSON.parse(error.message) : {}
-      let errorMessage = 'An error occurred while initiating payment.'
+        setPaymentData(mockPaymentData)
+        // clear builder cart after creating order
+        clearBuilderCart()
+      } catch (error) {
+        const errorData = error instanceof Error ? JSON.parse(error.message) : {}
+        let errorMessage = 'An error occurred while initiating payment.'
 
       if (errorData?.cause?.code === 'OutOfStock') {
         errorMessage = 'One or more items in your cart are out of stock.'
@@ -219,7 +242,18 @@ export const CheckoutPage: React.FC = () => {
       setError(errorMessage)
       toast.error(errorMessage)
     }
-  }, [billingAddress, billingAddressSameAsShipping, cart?.items, email, shippingAddress, supabase, tipAmount, user])
+  }, [
+    billingAddress,
+    billingAddressSameAsShipping,
+    builderItems,
+    cart?.items,
+    clearBuilderCart,
+    email,
+    shippingAddress,
+    supabase,
+    tipAmount,
+    user,
+  ])
 
   if (!stripe) return null
 

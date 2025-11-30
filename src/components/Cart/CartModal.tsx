@@ -21,9 +21,12 @@ import { EditItemQuantityButton } from './EditItemQuantityButton'
 import { OpenCartButton } from './OpenCart'
 import { Button } from '@/components/ui/button'
 import { Product } from '@/payload-types'
+import { useBuilderCart } from '@/providers/BuilderCart'
 
 export function CartModal() {
   const { cart } = useCart()
+  const { items: builderItems, updateQuantity: updateBuilderQty, removeItem: removeBuilder } =
+    useBuilderCart()
   const [isOpen, setIsOpen] = useState(false)
 
   const pathname = usePathname()
@@ -34,24 +37,24 @@ export function CartModal() {
   }, [pathname])
 
   const totalQuantity = useMemo(() => {
-    if (!cart || !cart.items || !cart.items.length) return undefined
-    return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
-  }, [cart])
+    const base = cart?.items?.reduce((quantity, item) => (item.quantity || 0) + quantity, 0) || 0
+    const builderCount = builderItems?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
+    const total = base + builderCount
+    return total || undefined
+  }, [cart, builderItems])
 
   const fallbackTotal = useMemo(() => {
-    if (!cart?.items?.length) return 0
-    return cart.items.reduce((sum, item) => {
-      const product = item.product
-      const qty = item.quantity || 1
-      const builderPrice =
-        (item as any)?.metadata?.builder?.totals?.price && typeof (item as any).metadata.builder.totals.price === 'number'
-          ? (item as any).metadata.builder.totals.price
-          : 0
-      if (builderPrice) return sum + builderPrice * qty
-      if (typeof product === 'object' && product?.priceInUSD) return sum + product.priceInUSD * qty
-      return sum
-    }, 0)
-  }, [cart?.items])
+    const productTotal =
+      cart?.items?.reduce((sum, item) => {
+        const product = item.product
+        const qty = item.quantity || 1
+        if (typeof product === 'object' && product?.priceInUSD) return sum + product.priceInUSD * qty
+        return sum
+      }, 0) || 0
+    const builderTotal =
+      builderItems?.reduce((sum, item) => sum + item.totals.price * (item.quantity || 1), 0) || 0
+    return productTotal + builderTotal
+  }, [cart?.items, builderItems])
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
@@ -66,7 +69,7 @@ export function CartModal() {
           <SheetDescription>Manage your cart here, add items to view the total.</SheetDescription>
         </SheetHeader>
 
-        {!cart || cart?.items?.length === 0 ? (
+        {!cart || (cart?.items?.length === 0 && builderItems.length === 0) ? (
           <div className="text-center flex flex-col items-center gap-2">
             <ShoppingCart className="h-16" />
             <p className="text-center text-2xl font-bold">Your cart is empty.</p>
@@ -75,47 +78,72 @@ export function CartModal() {
           <div className="grow flex px-4">
             <div className="flex flex-col justify-between w-full">
               <ul className="grow overflow-auto py-4">
-                {cart?.items?.map((item, i) => {
-                  const builder = (item as any)?.metadata?.builder
-                  const product = item.product
-                  const variant = item.variant
-
-                  if (builder) {
-                    const qty = item.quantity || 1
-                    const price = builder?.totals?.price || 0
-                    return (
-                      <li className="flex w-full flex-col" key={i}>
-                        <div className="relative flex w-full flex-row justify-between px-1 py-4">
-                          <div className="absolute z-40 -mt-2 ml-[55px]">
-                            <DeleteItemButton item={item} />
-                          </div>
-                          <div className="z-30 flex flex-row space-x-4 w-full">
-                            <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900" />
-                            <div className="flex flex-1 flex-col text-base">
-                              <span className="leading-tight font-semibold">Custom meal</span>
-                              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                Base: {builder.base?.name || 'Selected'} ·{' '}
-                                {builder.options?.map((opt: any) => opt.name).join(', ')}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex h-16 flex-col justify-between">
-                            <Price
-                              amount={price}
-                              className="flex justify-end space-y-2 text-right text-sm"
-                            />
-                            <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
-                              <EditItemQuantityButton item={item} type="minus" />
-                              <p className="w-6 text-center">
-                                <span className="w-full text-sm">{qty}</span>
-                              </p>
-                              <EditItemQuantityButton item={item} type="plus" />
-                            </div>
+                {builderItems.map((builder) => {
+                  const qty = builder.quantity || 1
+                  const price = builder.totals.price || 0
+                  return (
+                    <li className="flex w-full flex-col" key={builder.id}>
+                      <div className="relative flex w-full flex-row justify-between px-1 py-4">
+                        <div className="absolute z-40 -mt-2 ml-[55px]">
+                          <button
+                            aria-label="Remove builder item"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              removeBuilder(builder.id)
+                            }}
+                            className="rounded-full bg-neutral-500 px-2 py-1 text-white text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="z-30 flex flex-row space-x-4 w-full">
+                          <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900" />
+                          <div className="flex flex-1 flex-col text-base">
+                            <span className="leading-tight font-semibold">Custom meal</span>
+                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                              Base: {builder.base?.name || 'Selected'}
+                            </p>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                              {builder.options.map((opt) => opt.name).join(', ')}
+                            </p>
                           </div>
                         </div>
-                      </li>
-                    )
-                  }
+                        <div className="flex h-16 flex-col justify-between">
+                          <Price
+                            amount={price}
+                            className="flex justify-end space-y-2 text-right text-sm"
+                          />
+                          <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
+                            <button
+                              className="px-2"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                updateBuilderQty(builder.id, Math.max(1, qty - 1))
+                              }}
+                            >
+                              -
+                            </button>
+                            <p className="w-6 text-center">
+                              <span className="w-full text-sm">{qty}</span>
+                            </p>
+                            <button
+                              className="px-2"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                updateBuilderQty(builder.id, qty + 1)
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
+                {cart?.items?.map((item, i) => {
+                  const product = item.product
+                  const variant = item.variant
 
                   if (typeof product !== 'object' || !item || !product || !product.slug)
                     return <React.Fragment key={i} />

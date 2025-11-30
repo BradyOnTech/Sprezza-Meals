@@ -40,7 +40,7 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const { data: items } = await supabase
     .from('order_items')
-    .select('id, title, quantity, total_price, unit_price, meal_slug')
+    .select('id, title, quantity, total_price, unit_price, meal_slug, metadata')
     .eq('order_id', Number(id))
 
   if (error || !order) {
@@ -79,6 +79,11 @@ export default async function Order({ params, searchParams }: PageProps) {
                     <p className="text-sm text-muted-foreground">
                       Qty {item.quantity} {item.meal_slug ? `· ${item.meal_slug}` : ''}
                     </p>
+                    {item.metadata?.builder?.options ? (
+                      <p className="text-xs text-muted-foreground">
+                        {item.metadata.builder.options.map((opt: any) => opt.name).join(', ')}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="text-right">
                     {typeof item.total_price === 'number' ? (
