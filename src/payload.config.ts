@@ -66,6 +66,9 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
+    // Prevent dev-time schema "push" so we rely on migrations.
+    push: false,
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   editor: lexicalEditor({
     features: () => {
