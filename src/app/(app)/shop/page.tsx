@@ -5,6 +5,7 @@ import { sorting } from '@/lib/constants'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
+import { ActiveFilters } from './ActiveFilters'
 
 export const metadata = {
   description: 'Search for meals in the store.',
@@ -223,6 +224,7 @@ export default async function ShopPage({ searchParams }: Props) {
 
   return (
     <div>
+      <ActiveFilters search={searchValue} category={categoryParam} tag={tagParam} />
       {mealError ? <p className="mb-4 text-red-500 text-sm">{mealError}</p> : null}
 
       {searchValue ? (
