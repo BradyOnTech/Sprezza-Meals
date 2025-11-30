@@ -26,7 +26,6 @@ import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { SavedAddress } from '@/components/addresses/AddressListing'
-import { nanoid } from 'nanoid'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
@@ -128,10 +127,8 @@ export const CheckoutPage: React.FC = () => {
   }, [])
 
   const initiatePaymentIntent = useCallback(
-    async (paymentID: string) => {
+    async (_paymentID: string) => {
       try {
-        // Mock PaymentIntent: create order + items in Supabase to unblock flow
-        const orderId = nanoid(10)
         const lineItems =
           cart?.items?.map((item) => {
             const quantity = item.quantity || 1
@@ -146,8 +143,11 @@ export const CheckoutPage: React.FC = () => {
             }
           }) || []
 
-        const total =
+        const subtotal =
           lineItems.reduce((sum, li) => sum + (typeof li.total_price === 'number' ? li.total_price : 0), 0) || 0
+
+        // TODO: tax/tips; for now totals = subtotal
+        const total = subtotal
 
         if (user) {
           const { error: orderError, data: createdOrders } = await supabase
@@ -160,7 +160,7 @@ export const CheckoutPage: React.FC = () => {
               items_count: lineItems.length,
               shipping_address: billingAddressSameAsShipping ? shippingAddress ?? billingAddress : shippingAddress,
               billing_address: billingAddress,
-              payment_intent_id: `mock_${orderId}`,
+              payment_intent_id: `mock_${nanoid(10)}`,
             })
             .select('id')
             .limit(1)
@@ -193,7 +193,7 @@ export const CheckoutPage: React.FC = () => {
         }
 
         const mockPaymentData = {
-          clientSecret: `mock_secret_${orderId}`,
+          clientSecret: `mock_secret_${nanoid(8)}`,
         }
 
         setPaymentData(mockPaymentData)
@@ -209,7 +209,15 @@ export const CheckoutPage: React.FC = () => {
         toast.error(errorMessage)
       }
     },
-    [billingAddress, billingAddressSameAsShipping, email, initiatePayment, shippingAddress],
+    [
+      billingAddress,
+      billingAddressSameAsShipping,
+      cart?.items,
+      email,
+      shippingAddress,
+      supabase,
+      user,
+    ],
   )
 
   if (!stripe) return null
