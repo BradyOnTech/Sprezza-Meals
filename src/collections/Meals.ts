@@ -5,9 +5,8 @@ import {
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-import type { Where } from 'payload'
+import type { CollectionConfig, Where } from 'payload'
 import { slugField } from 'payload'
-import type { CollectionConfig } from 'payload'
 
 const descriptionEditor = lexicalEditor({
   features: ({ rootFeatures }) => {
@@ -233,8 +232,6 @@ export const Meals: CollectionConfig = {
     },
   ],
   versions: {
-    drafts: {
-      autosave: true,
-    },
+    drafts: false,
   },
 }

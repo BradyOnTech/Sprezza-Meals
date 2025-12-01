@@ -17,7 +17,8 @@ const nextConfig = {
       }),
     ],
   },
-  reactStrictMode: true,
+  // Disable strict mode to avoid hydration mismatches in Payload admin UI
+  reactStrictMode: false,
   redirects,
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {

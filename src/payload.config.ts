@@ -65,6 +65,12 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
+      // Supabase requires SSL; disable cert validation for pooled connection
+      ssl: { rejectUnauthorized: false },
+      // Keep pool small and avoid idle timeouts to reduce dropped connections
+      max: 5,
+      idleTimeoutMillis: 0,
+      connectionTimeoutMillis: 10000,
     },
     // Prevent dev-time schema "push" so we rely on migrations.
     push: false,

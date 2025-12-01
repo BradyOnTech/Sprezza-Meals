@@ -1253,7 +1253,6 @@ export interface Meal {
   relatedMeals?: (number | Meal)[] | null;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1864,7 +1863,6 @@ export interface MealsSelect<T extends boolean = true> {
   relatedMeals?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
