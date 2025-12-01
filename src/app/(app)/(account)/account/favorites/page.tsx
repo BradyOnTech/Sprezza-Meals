@@ -34,7 +34,7 @@ type MealPlanFavorite = {
 }
 
 export default async function FavoritesPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

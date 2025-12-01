@@ -26,17 +26,20 @@ export const ForgotPasswordForm: React.FC = () => {
     register,
   } = useForm<FormData>()
 
-  const onSubmit = useCallback(async (data: FormData) => {
-    try {
-      await forgotPassword(data)
-      setSuccess(true)
-      setError('')
-    } catch (err) {
-      setError(
-        'There was a problem while attempting to send you a password reset email. Please try again.',
-      )
-    }
-  }, [forgotPassword])
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      try {
+        await forgotPassword(data)
+        setSuccess(true)
+        setError('')
+      } catch (_err) {
+        setError(
+          'There was a problem while attempting to send you a password reset email. Please try again.',
+        )
+      }
+    },
+    [forgotPassword],
+  )
 
   return (
     <Fragment>

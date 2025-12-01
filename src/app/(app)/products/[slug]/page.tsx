@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   if (!meal) return notFound()
 
   const heroImage = typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
-  const canIndex = meal._status === 'published' && meal.flags?.isActive !== false
+  const canIndex = (meal as any)._status === 'published' && meal.flags?.isActive !== false
 
   return {
     description: meal.summary || undefined,
@@ -37,9 +37,9 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
           images: [
             {
               alt: heroImage?.alt,
-              height: heroImage.height,
+              height: heroImage.height || undefined,
               url: heroImage.url,
-              width: heroImage.width,
+              width: heroImage.width || undefined,
             },
           ],
         }
@@ -82,7 +82,9 @@ export default async function MealPage({ params }: Args) {
     offers: {
       '@type': 'Offer',
       availability:
-        meal.flags?.isActive === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+        meal.flags?.isActive === false
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
       price: meal.price,
       priceCurrency: 'USD',
     },
@@ -117,7 +119,7 @@ export default async function MealPage({ params }: Args) {
             >
               {gallery.length ? <Gallery gallery={gallery} /> : null}
             </Suspense>
-        </div>
+          </div>
 
           <div className="basis-full lg:basis-1/2">
             <MealSummary meal={meal} />
@@ -148,6 +150,8 @@ function RelatedMeals({ meals }: { meals: Meal[] }) {
         {meals.map((meal) => {
           const relatedImage =
             typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
+
+          if (!relatedImage) return null
 
           return (
             <li

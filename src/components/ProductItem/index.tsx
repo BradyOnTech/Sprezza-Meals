@@ -1,14 +1,10 @@
 import { Media } from '@/components/Media'
-import { OrderStatus } from '@/components/OrderStatus'
 import { Price } from '@/components/Price'
-import { Button } from '@/components/ui/button'
-import { Media as MediaType, Order, Product, Variant } from '@/payload-types'
-import { formatDateTime } from '@/utilities/formatDateTime'
+import { Product, Variant } from '@/payload-types'
 import Link from 'next/link'
 
 type Props = {
   product: Product
-  style?: 'compact' | 'default'
   variant?: Variant
   quantity?: number
   /**
@@ -17,13 +13,7 @@ type Props = {
   currencyCode?: string
 }
 
-export const ProductItem: React.FC<Props> = ({
-  product,
-  style = 'default',
-  quantity,
-  variant,
-  currencyCode,
-}) => {
+export const ProductItem: React.FC<Props> = ({ product, quantity, variant, currencyCode }) => {
   const { title } = product
 
   const metaImage =

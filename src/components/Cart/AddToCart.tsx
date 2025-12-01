@@ -16,9 +16,8 @@ export function AddToCart({ product }: Props) {
   const { addItem } = useMealCart()
   const searchParams = useSearchParams()
 
-  const variants = product.variants?.docs || []
-
   const selectedVariant = useMemo<Variant | undefined>(() => {
+    const variants = product.variants?.docs || []
     if (product.enableVariants && variants.length) {
       const variantId = searchParams.get('variant')
 
@@ -35,7 +34,7 @@ export function AddToCart({ product }: Props) {
     }
 
     return undefined
-  }, [product.enableVariants, searchParams, variants])
+  }, [product.enableVariants, searchParams, product.variants?.docs])
 
   const addToCart = useCallback(
     (e: React.FormEvent<HTMLButtonElement>) => {
@@ -48,9 +47,7 @@ export function AddToCart({ product }: Props) {
         price:
           (selectedVariant && typeof selectedVariant?.priceInUSD === 'number'
             ? selectedVariant.priceInUSD
-            : undefined) ??
-          (typeof product.price === 'number' ? product.price : undefined) ??
-          (typeof (product as any).priceInUSD === 'number' ? (product as any).priceInUSD : 0),
+            : undefined) ?? (typeof product.priceInUSD === 'number' ? product.priceInUSD : 0),
       })
       toast.success('Item added to cart.')
     },

@@ -66,7 +66,7 @@ export function ResetPasswordForm() {
         // If no token is found, prompt user to request a new reset email
         setError('Reset link is invalid or expired. Please request a new link.')
         setStatus('pending')
-      } catch (err: any) {
+      } catch (_err) {
         setError('Unable to validate reset link. Please request a new one.')
         setStatus('pending')
       }
@@ -86,7 +86,7 @@ export function ResetPasswordForm() {
         setStatus('complete')
         toast.success('Password updated. You are now signed in.')
         router.push('/account')
-      } catch (err: any) {
+      } catch (_err) {
         setError('Unable to update password. Please try again.')
       }
     },

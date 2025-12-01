@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
-import { Github, Apple, Mail, LucideIcon } from 'lucide-react'
+import { Apple, Mail, LucideIcon } from 'lucide-react'
 import React, { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 

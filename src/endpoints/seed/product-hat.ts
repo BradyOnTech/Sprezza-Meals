@@ -1,4 +1,4 @@
-import type { Category, Product, VariantOption, VariantType } from '@/payload-types'
+import type { Category, Product, VariantType } from '@/payload-types'
 import type { Media } from '@/payload-types'
 import { RequiredDataFromCollectionSlug } from 'payload'
 
@@ -14,7 +14,6 @@ export const productHatData: (args: ProductArgs) => RequiredDataFromCollectionSl
   galleryImage,
   relatedProducts,
   metaImage,
-  variantTypes,
   categories,
 }) => {
   return {

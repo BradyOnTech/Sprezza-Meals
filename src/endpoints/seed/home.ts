@@ -1,4 +1,4 @@
-import type { Category, Media } from '@/payload-types'
+import type { Media } from '@/payload-types'
 import { RequiredDataFromCollectionSlug } from 'payload'
 
 type ProductArgs = {

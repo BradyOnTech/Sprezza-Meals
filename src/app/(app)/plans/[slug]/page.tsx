@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { PlanGridItem } from '@/components/plan/PlanGridItem'
+
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
@@ -25,7 +25,7 @@ const formatWindow = (schedule?: { startDate?: string | null; endDate?: string |
 
 export default async function PlanDetail({ params }: Params) {
   const { slug } = await params
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: plan } = await supabase
     .from('meal_plans')
     .select('*, items:items(*, meal:meal_id (title, slug, media))')
@@ -91,14 +91,22 @@ export default async function PlanDetail({ params }: Params) {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params
-  const supabase = createSupabaseServerClient()
-  const { data: plan } = await supabase.from('meal_plans').select('title, tagline').eq('slug', slug).maybeSingle()
+  const supabase = await createSupabaseServerClient()
+  const { data: plan } = await supabase
+    .from('meal_plans')
+    .select('title, tagline')
+    .eq('slug', slug)
+    .maybeSingle()
 
   if (!plan) return notFound()
 
-  return mergeOpenGraph({
+  return {
     title: plan.title,
     description: plan.tagline || '',
-    url: `/plans/${slug}`,
-  })
+    openGraph: mergeOpenGraph({
+      title: plan.title,
+      description: plan.tagline || '',
+      url: `/plans/${slug}`,
+    }),
+  }
 }

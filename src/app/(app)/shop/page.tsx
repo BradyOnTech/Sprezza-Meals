@@ -21,7 +21,9 @@ type Props = {
 export default async function ShopPage({ searchParams }: Props) {
   const resolvedParams = await searchParams
   const searchValue = Array.isArray(resolvedParams.q) ? resolvedParams.q[0] : resolvedParams.q
-  const sortParam = Array.isArray(resolvedParams.sort) ? resolvedParams.sort[0] : resolvedParams.sort
+  const sortParam = Array.isArray(resolvedParams.sort)
+    ? resolvedParams.sort[0]
+    : resolvedParams.sort
   const categoryParam = Array.isArray(resolvedParams.category)
     ? resolvedParams.category[0]
     : resolvedParams.category
@@ -45,9 +47,6 @@ export default async function ShopPage({ searchParams }: Props) {
         limit: 1,
         overrideAccess: false,
         pagination: false,
-        select: {
-          id: true,
-        },
         where: {
           or: categoryOr,
         },
@@ -74,7 +73,6 @@ export default async function ShopPage({ searchParams }: Props) {
         limit: 1,
         overrideAccess: false,
         pagination: false,
-        select: { id: true },
         where: {
           or: tagOr,
         },
@@ -113,10 +111,7 @@ export default async function ShopPage({ searchParams }: Props) {
             ...(searchValue
               ? [
                   {
-                    or: [
-                      { title: { like: searchValue } },
-                      { tagline: { like: searchValue } },
-                    ],
+                    or: [{ title: { like: searchValue } }, { tagline: { like: searchValue } }],
                   },
                 ]
               : []),
@@ -186,10 +181,7 @@ export default async function ShopPage({ searchParams }: Props) {
           ...(searchValue
             ? [
                 {
-                  or: [
-                    { title: { like: searchValue } },
-                    { summary: { like: searchValue } },
-                  ],
+                  or: [{ title: { like: searchValue } }, { summary: { like: searchValue } }],
                 },
               ]
             : []),

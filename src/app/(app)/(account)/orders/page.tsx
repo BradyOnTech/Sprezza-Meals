@@ -7,7 +7,7 @@ import { formatDateTime } from '@/utilities/formatDateTime'
 import { Price } from '@/components/Price'
 
 export default async function Orders() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

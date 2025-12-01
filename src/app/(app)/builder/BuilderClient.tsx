@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Price } from '@/components/Price'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
+
 import { Message } from '@/components/Message'
 import { useBuilderCart } from '@/providers/BuilderCart'
 
@@ -17,15 +17,17 @@ type Base = {
   nutrition?: Record<string, number | null>
 }
 
+type Option = {
+  id: number
+  name: string
+  priceAdjustment?: number | null
+  nutrition?: Record<string, number | null>
+}
+
 type Category = {
   id: number
   name: string
-  options?: {
-    id: number
-    name: string
-    priceAdjustment?: number | null
-    nutrition?: Record<string, number | null>
-  }[]
+  options?: Option[]
   minSelections?: number | null
   maxSelections?: number | null
 }
@@ -60,7 +62,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const { addItem } = useBuilderCart()
   const optionMap = useMemo(() => {
-    const map = new Map<number, Category['options'][number]>()
+    const map = new Map<number, Option>()
     categories.forEach((cat) => {
       cat.options?.forEach((opt) => map.set(opt.id, opt))
     })
@@ -114,8 +116,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
   const validateSelections = () => {
     const errors: string[] = []
     categories.forEach((cat) => {
-      const selectedCount =
-        cat.options?.filter((opt) => selectedOptions[opt.id]).length ?? 0
+      const selectedCount = cat.options?.filter((opt) => selectedOptions[opt.id]).length ?? 0
       const min = cat.minSelections || 0
       const max = cat.maxSelections || undefined
       if (selectedCount < min) {
@@ -215,9 +216,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {error ? <Message error={error} /> : null}
-            {validationErrors.length ? (
-              <Message error={validationErrors.join(' · ')} />
-            ) : null}
+            {validationErrors.length ? <Message error={validationErrors.join(' · ')} /> : null}
             {loading ? <p className="text-sm text-muted-foreground">Calculating...</p> : null}
             {totals ? (
               <div className="space-y-2">
@@ -226,7 +225,10 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
                   <Price amount={totals.totals.price} inCents={false} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <Stat label="Calories" value={`${totals.totals.nutrition.calories.toFixed(0)} kcal`} />
+                  <Stat
+                    label="Calories"
+                    value={`${totals.totals.nutrition.calories.toFixed(0)} kcal`}
+                  />
                   <Stat label="Protein" value={`${totals.totals.nutrition.protein.toFixed(1)} g`} />
                   <Stat label="Carbs" value={`${totals.totals.nutrition.carbs.toFixed(1)} g`} />
                   <Stat label="Fat" value={`${totals.totals.nutrition.fat.toFixed(1)} g`} />
@@ -249,12 +251,10 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
           className="w-full"
           onClick={async () => {
             const ok = validateSelections()
-            if (!ok || !totals) return
+            if (!ok || !totals || !selectedBase) return
             try {
               const base = bases.find((b) => b.id === selectedBase)
-              const selectedOptionDetails = optionIds
-                .map((id) => optionMap.get(id))
-                .filter(Boolean)
+              const selectedOptionDetails = optionIds.map((id) => optionMap.get(id)).filter(Boolean)
               await addItem({
                 base: { id: selectedBase, name: base?.name, price: base?.basePrice || 0 },
                 options: selectedOptionDetails.map((opt) => ({
@@ -262,7 +262,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
                   name: opt!.name,
                   priceAdjustment: opt!.priceAdjustment || 0,
                 })),
-                totals,
+                totals: totals.totals,
               })
             } catch (err) {
               setError('Unable to add to cart.')

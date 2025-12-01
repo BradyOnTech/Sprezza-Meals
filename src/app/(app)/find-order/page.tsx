@@ -6,7 +6,7 @@ import { FindOrderForm } from '@/components/forms/FindOrderForm'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export default async function FindOrderPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

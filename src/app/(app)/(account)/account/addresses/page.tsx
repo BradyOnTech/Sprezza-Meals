@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { AddressManager } from '@/components/addresses/AddressManager'
 
 export default async function AddressesPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

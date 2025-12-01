@@ -12,14 +12,14 @@ export default async function BuilderPage() {
       collection: 'meal-bases',
       limit: 100,
       pagination: false,
-      where: { _status: { equals: 'published' } },
+      where: { isActive: { equals: true } },
     }),
     payload.find({
       collection: 'customization-categories',
       depth: 2,
       limit: 100,
       pagination: false,
-      where: { _status: { equals: 'published' }, isActive: { equals: true } },
+      where: { isActive: { equals: true } },
     }),
   ])
 
@@ -35,7 +35,7 @@ export default async function BuilderPage() {
         </p>
       </div>
 
-      <BuilderClient bases={bases as any[]} categories={categories as any[]} />
+      <BuilderClient bases={bases} categories={categories} />
     </div>
   )
 }

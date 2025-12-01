@@ -102,7 +102,7 @@ export const AddressForm: React.FC<Props> = ({
           callback(data)
         }
         toast.success('Address saved.')
-      } catch (error) {
+      } catch (_error) {
         toast.error('Unable to save address. Please try again.')
       }
     },

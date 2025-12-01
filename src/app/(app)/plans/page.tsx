@@ -4,7 +4,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PlanGridItem } from '@/components/plan/PlanGridItem'
 
 export default async function PlansPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: plans } = await supabase
     .from('meal_plans')
     .select('*')

@@ -63,7 +63,7 @@ export const AccountForm: React.FC = () => {
             password: '',
             passwordConfirm: '',
           })
-        } catch (err: any) {
+        } catch (_err) {
           setError('Unable to update password. Please try again.')
           toast.error('Unable to update password.')
         }
@@ -97,7 +97,7 @@ export const AccountForm: React.FC = () => {
           password: '',
           passwordConfirm: '',
         })
-      } catch (err: any) {
+      } catch (_err) {
         setError('There was a problem updating your account.')
         toast.error('There was a problem updating your account.')
       }

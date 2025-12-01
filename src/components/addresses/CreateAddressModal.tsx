@@ -11,14 +11,29 @@ import {
 } from '@/components/ui/dialog'
 import { AddressForm } from '@/components/forms/AddressForm'
 import { Address } from '@/payload-types'
+import { SavedAddress } from '@/components/addresses/AddressListing'
 import { DefaultDocumentIDType } from 'payload'
+
+type AddressFormValues = {
+  title?: string | null
+  firstName?: string | null
+  lastName?: string | null
+  company?: string | null
+  addressLine1?: string | null
+  addressLine2?: string | null
+  city?: string | null
+  state?: string | null
+  postalCode?: string | null
+  country?: string | null
+  phone?: string | null
+}
 
 type Props = {
   addressID?: DefaultDocumentIDType
   initialData?: Partial<Omit<Address, 'country'>> & { country?: string }
   buttonText?: string
   modalTitle?: string
-  callback?: (address: Partial<Address>) => void
+  callback?: (address: SavedAddress) => void
   onSaved?: () => void
   skipSubmission?: boolean
   disabled?: boolean
@@ -39,15 +54,9 @@ export const CreateAddressModal: React.FC<Props> = ({
     setOpen(state)
   }
 
-  const closeModal = () => {
-    setOpen(false)
-  }
-
-  const handleCallback = (data: Partial<Address>) => {
-    closeModal()
-
+  const handleCallback = (data: Partial<AddressFormValues>) => {
     if (callback) {
-      callback(data)
+      callback(data as SavedAddress)
     }
     if (onSaved) {
       onSaved()

@@ -12,7 +12,7 @@ export function Item({ href, title }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const active = pathname === href
-  const q = searchParams.get('q')
+
   const DynamicTag = active ? 'p' : Link
 
   return (

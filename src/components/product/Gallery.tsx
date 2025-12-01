@@ -38,7 +38,7 @@ export const Gallery: React.FC<Props> = ({ gallery }) => {
         let variantID: DefaultDocumentIDType
 
         if (typeof item.variantOption === 'object') {
-          variantID = item.variantOption.id
+          variantID = item.variantOption.id as number
         } else variantID = item.variantOption
 
         return Boolean(values.find((value) => value === String(variantID)))

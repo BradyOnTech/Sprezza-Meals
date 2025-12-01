@@ -57,7 +57,9 @@ export const CheckoutPage: React.FC = () => {
   const [tipAmount, setTipAmount] = useState<number>(0)
 
   const cartIsEmpty =
-    (!cart || !cart.items || !cart.items.length) && builderItems.length === 0 && mealItems.length === 0
+    (!cart || !cart.items || !cart.items.length) &&
+    builderItems.length === 0 &&
+    mealItems.length === 0
 
   const canGoToPayment = Boolean(
     (email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress),
@@ -108,17 +110,11 @@ export const CheckoutPage: React.FC = () => {
   // Prefill billing/shipping when addresses load
   useEffect(() => {
     if (!billingAddress && addresses.length) {
-      const preferred =
-        addresses.find((addr) => addr.isDefault) ||
-        addresses.find((addr) => addr.is_default) ||
-        addresses[0]
+      const preferred = addresses.find((addr) => addr.isDefault) || addresses[0]
       setBillingAddress(preferred)
     }
     if (!billingAddressSameAsShipping && !shippingAddress && addresses.length) {
-      const preferred =
-        addresses.find((addr) => addr.isDefault) ||
-        addresses.find((addr) => addr.is_default) ||
-        addresses[0]
+      const preferred = addresses.find((addr) => addr.isDefault) || addresses[0]
       setShippingAddress(preferred)
     }
   }, [addresses, billingAddress, billingAddressSameAsShipping, shippingAddress])
@@ -152,94 +148,95 @@ export const CheckoutPage: React.FC = () => {
     return productTotal + builderTotal + mealTotal
   }, [cart?.items, builderItems, mealItems])
 
-  const initiatePaymentIntent = useCallback(async (_paymentID: string) => {
-    try {
-      const productLineItems =
-        cart?.items?.map((item) => {
-          const quantity = item.quantity || 1
-          const product = typeof item.product === 'object' ? item.product : undefined
-          const price =
-            product && typeof product.priceInUSD === 'number' ? product.priceInUSD / 100 : 0
-          return {
-            title: product?.title || 'Item',
-            quantity,
-            unit_price: price,
-            total_price: price * quantity,
-            meal_slug: product?.slug,
-            metadata: undefined,
+  const initiatePaymentIntent = useCallback(
+    async (_paymentID: string) => {
+      try {
+        const productLineItems =
+          cart?.items?.map((item) => {
+            const quantity = item.quantity || 1
+            const product = typeof item.product === 'object' ? item.product : undefined
+            const price =
+              product && typeof product.priceInUSD === 'number' ? product.priceInUSD / 100 : 0
+            return {
+              title: product?.title || 'Item',
+              quantity,
+              unit_price: price,
+              total_price: price * quantity,
+              meal_slug: product?.slug,
+              metadata: undefined,
+            }
+          }) || []
+
+        const builderLineItems =
+          builderItems?.map((item) => ({
+            title: 'Custom meal',
+            quantity: item.quantity || 1,
+            unit_price: Number(item.totals.price),
+            total_price: Number(item.totals.price) * (item.quantity || 1),
+            meal_slug: item.base?.name,
+            metadata: { builder: item },
+          })) || []
+
+        const mealLineItems =
+          mealItems?.map((item) => ({
+            title: item.title || 'Meal',
+            quantity: item.quantity || 1,
+            unit_price: Number(item.price || 0),
+            total_price: Number(item.price || 0) * (item.quantity || 1),
+            meal_slug: item.slug,
+            metadata: { mealId: item.mealId },
+          })) || []
+
+        const lineItems = [...productLineItems, ...builderLineItems, ...mealLineItems]
+
+        const tax = subtotal * TAX_RATE
+        const total = subtotal + tax + (tipAmount || 0)
+
+        if (user) {
+          const { error: orderError, data: createdOrders } = await supabase
+            .from('orders')
+            .insert({
+              user_id: user.id,
+              customer_email: user.email ?? email,
+              status: 'pending',
+              total_amount: total,
+              tax_amount: tax,
+              tip_amount: tipAmount || 0,
+              items_count: lineItems.length,
+              shipping_address: billingAddressSameAsShipping
+                ? (shippingAddress ?? billingAddress)
+                : shippingAddress,
+              billing_address: billingAddress,
+              payment_intent_id: `mock_${crypto.randomUUID()}`,
+            })
+            .select('id')
+            .limit(1)
+
+          if (orderError) {
+            throw orderError
           }
-        }) || []
 
-      const builderLineItems =
-        builderItems?.map((item) => ({
-          title: 'Custom meal',
-          quantity: item.quantity || 1,
-          unit_price: Number(item.totals.price),
-          total_price: Number(item.totals.price) * (item.quantity || 1),
-          meal_slug: item.base?.name,
-          metadata: { builder: item },
-        })) || []
-
-      const mealLineItems =
-        mealItems?.map((item) => ({
-          title: item.title || 'Meal',
-          quantity: item.quantity || 1,
-          unit_price: Number(item.price || 0),
-          total_price: Number(item.price || 0) * (item.quantity || 1),
-          meal_slug: item.slug,
-          metadata: { mealId: item.mealId },
-        })) || []
-
-      const lineItems = [...productLineItems, ...builderLineItems, ...mealLineItems]
-
-      const tax = subtotal * TAX_RATE
-      const total = subtotal + tax + (tipAmount || 0)
-
-      if (user) {
-        const { error: orderError, data: createdOrders } = await supabase
-          .from('orders')
-          .insert({
-            user_id: user.id,
-            customer_email: user.email ?? email,
-            status: 'pending',
-            total_amount: total,
-            tax_amount: tax,
-            tip_amount: tipAmount || 0,
-            items_count: lineItems.length,
-            shipping_address: billingAddressSameAsShipping ? shippingAddress ?? billingAddress : shippingAddress,
-            billing_address: billingAddress,
-            payment_intent_id: `mock_${crypto.randomUUID()}`,
-          })
-          .select('id')
-          .limit(1)
-
-        if (orderError) {
-          throw orderError
-        }
-
-        const orderRecord = createdOrders?.[0]
-        const orderDbId = orderRecord?.id
+          const orderRecord = createdOrders?.[0]
+          const orderDbId = orderRecord?.id
 
           if (orderDbId) {
-            const { error: itemsError } = await supabase
-              .from('order_items')
-              .insert(
-                lineItems.map((li) => ({
+            const { error: itemsError } = await supabase.from('order_items').insert(
+              lineItems.map((li) => ({
                 order_id: orderDbId,
                 title: li.title,
                 quantity: li.quantity,
                 unit_price: li.unit_price,
                 total_price: li.total_price,
                 meal_slug: li.meal_slug,
-                  metadata: li.metadata,
-                })),
-              )
+                metadata: li.metadata,
+              })),
+            )
 
             if (itemsError) {
               throw itemsError
+            }
           }
         }
-      }
 
         const mockPaymentData = {
           clientSecret: `mock_secret_${crypto.randomUUID().slice(0, 8)}`,
@@ -253,27 +250,30 @@ export const CheckoutPage: React.FC = () => {
         const errorData = error instanceof Error ? JSON.parse(error.message) : {}
         let errorMessage = 'An error occurred while initiating payment.'
 
-      if (errorData?.cause?.code === 'OutOfStock') {
-        errorMessage = 'One or more items in your cart are out of stock.'
-      }
+        if (errorData?.cause?.code === 'OutOfStock') {
+          errorMessage = 'One or more items in your cart are out of stock.'
+        }
 
-      setError(errorMessage)
-      toast.error(errorMessage)
-    }
-  }, [
-    billingAddress,
-    billingAddressSameAsShipping,
-    builderItems,
-    cart?.items,
-    clearBuilderCart,
-    clearMealCart,
-    email,
-    mealItems,
-    shippingAddress,
-    supabase,
-    tipAmount,
-    user,
-  ])
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
+    },
+    [
+      billingAddress,
+      billingAddressSameAsShipping,
+      builderItems,
+      cart?.items,
+      clearBuilderCart,
+      clearMealCart,
+      email,
+      mealItems,
+      shippingAddress,
+      subtotal,
+      supabase,
+      tipAmount,
+      user,
+    ],
+  )
 
   if (!stripe) return null
 
@@ -528,7 +528,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="flex flex-col gap-8">
                   <CheckoutForm
                     customerEmail={email}
-                    billingAddress={billingAddress}
+                    billingAddress={billingAddress as any}
                     setProcessingPayment={setProcessingPayment}
                   />
                   <Button
@@ -571,7 +571,9 @@ export const CheckoutPage: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Estimated tax ({(TAX_RATE * 100).toFixed(1)}%)</span>
+              <span className="text-muted-foreground">
+                Estimated tax ({(TAX_RATE * 100).toFixed(1)}%)
+              </span>
               <span>
                 <Price amount={subtotal * TAX_RATE} inCents={false} />
               </span>

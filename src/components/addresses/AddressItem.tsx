@@ -76,8 +76,8 @@ export const AddressItem: React.FC<Props> = ({
               {beforeActions}
               {address.id && (
                 <CreateAddressModal
-                  addressID={address.id}
-                  initialData={address}
+                  addressID={address.id as number}
+                  initialData={address as any}
                   buttonText={'Edit'}
                   modalTitle={'Edit address'}
                 />

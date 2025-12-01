@@ -17,8 +17,8 @@ type PageProps = {
   searchParams: Promise<{ email?: string }>
 }
 
-export default async function Order({ params, searchParams }: PageProps) {
-  const supabase = createSupabaseServerClient()
+export default async function Order({ params }: PageProps) {
+  const supabase = await createSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -73,7 +73,10 @@ export default async function Order({ params, searchParams }: PageProps) {
           {items && items.length ? (
             <ul className="flex flex-col gap-3">
               {items.map((item) => (
-                <li key={item.id} className="flex items-center justify-between rounded-lg border p-3">
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <div>
                     <p className="font-medium">{item.title}</p>
                     <p className="text-sm text-muted-foreground">
@@ -115,70 +118,67 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
         </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border p-4">
-          <h3 className="font-semibold mb-2">Payment summary</h3>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Subtotal</dt>
-              <dd>
-                {items && items.length ? (
-                  <Price
-                    amount={items.reduce(
-                      (sum, item) => sum + Number(item.total_price || 0),
-                      0,
-                    )}
-                    currencyCode="USD"
-                    inCents={false}
-                  />
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Tax</dt>
-              <dd>
-                {typeof order.tax_amount === 'number' ? (
-                  <Price amount={Number(order.tax_amount)} currencyCode="USD" inCents={false} />
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Tip</dt>
-              <dd>
-                {typeof order.tip_amount === 'number' ? (
-                  <Price amount={Number(order.tip_amount)} currencyCode="USD" inCents={false} />
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div className="flex justify-between border-t pt-2 font-semibold">
-              <dt>Total</dt>
-              <dd>
-                {typeof order.total_amount === 'number' ? (
-                  <Price amount={Number(order.total_amount)} currencyCode="USD" inCents={false} />
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-          </dl>
-        </div>
+        <section className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold mb-2">Payment summary</h3>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Subtotal</dt>
+                <dd>
+                  {items && items.length ? (
+                    <Price
+                      amount={items.reduce((sum, item) => sum + Number(item.total_price || 0), 0)}
+                      currencyCode="USD"
+                      inCents={false}
+                    />
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Tax</dt>
+                <dd>
+                  {typeof order.tax_amount === 'number' ? (
+                    <Price amount={Number(order.tax_amount)} currencyCode="USD" inCents={false} />
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Tip</dt>
+                <dd>
+                  {typeof order.tip_amount === 'number' ? (
+                    <Price amount={Number(order.tip_amount)} currencyCode="USD" inCents={false} />
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+              <div className="flex justify-between border-t pt-2 font-semibold">
+                <dt>Total</dt>
+                <dd>
+                  {typeof order.total_amount === 'number' ? (
+                    <Price amount={Number(order.total_amount)} currencyCode="USD" inCents={false} />
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </div>
 
-        <div className="rounded-lg border p-4">
-          <h3 className="font-semibold mb-2">Payment intent</h3>
-          <p className="text-sm text-muted-foreground break-all">
-            {order.payment_intent_id || 'Not created (mock)'}
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Stripe integration deferred; this order is stored with a mock intent ID.
-          </p>
-        </div>
-      </section>
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold mb-2">Payment intent</h3>
+            <p className="text-sm text-muted-foreground break-all">
+              {order.payment_intent_id || 'Not created (mock)'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Stripe integration deferred; this order is stored with a mock intent ID.
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   )

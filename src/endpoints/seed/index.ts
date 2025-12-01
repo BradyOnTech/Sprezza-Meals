@@ -110,11 +110,19 @@ export const seed = async ({
   const [highProteinTag, glutenFreeTag] = await Promise.all([
     payload.create({
       collection: 'dietary-tags',
-      data: { name: 'High Protein', description: '35g+ protein per serving', slug: 'high-protein' },
+      data: {
+        name: 'High Protein',
+        description: 'High in protein content',
+        slug: 'high-protein',
+      },
     }) as Promise<CreatedDoc<any>>,
     payload.create({
       collection: 'dietary-tags',
-      data: { name: 'Gluten Free', description: 'No gluten-containing ingredients', slug: 'gluten-free' },
+      data: {
+        name: 'Gluten Free',
+        description: 'No gluten-containing ingredients',
+        slug: 'gluten-free',
+      },
     }) as Promise<CreatedDoc<any>>,
   ])
 

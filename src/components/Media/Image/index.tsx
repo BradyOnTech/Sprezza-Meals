@@ -27,7 +27,7 @@ export const Image: React.FC<MediaProps> = (props) => {
     width: widthFromProps,
   } = props
 
-  const [isLoading, setIsLoading] = React.useState(true)
+  const [, setIsLoading] = React.useState(true)
 
   let width: number | undefined | null
   let height: number | undefined | null
@@ -35,19 +35,11 @@ export const Image: React.FC<MediaProps> = (props) => {
   let src: StaticImageData | string = srcFromProps || ''
 
   if (!src && resource && typeof resource === 'object') {
-    const {
-      alt: altFromResource,
-      filename: fullFilename,
-      height: fullHeight,
-      url,
-      width: fullWidth,
-    } = resource
+    const { alt: altFromResource, height: fullHeight, url, width: fullWidth } = resource
 
     width = widthFromProps ?? fullWidth
     height = heightFromProps ?? fullHeight
     alt = altFromResource
-
-    const filename = fullFilename
 
     src = `${process.env.NEXT_PUBLIC_SERVER_URL}${url}`
   }

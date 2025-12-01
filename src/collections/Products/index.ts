@@ -99,12 +99,14 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
                   },
                   filterOptions: ({ data }) => {
                     if (data?.enableVariants && data?.variantTypes?.length) {
-                      const variantTypeIDs = data.variantTypes.map((item: any) => {
-                        if (typeof item === 'object' && item?.id) {
-                          return item.id
-                        }
-                        return item
-                      }) as DefaultDocumentIDType[]
+                      const variantTypeIDs = data.variantTypes.map(
+                        (item: DefaultDocumentIDType | { id: DefaultDocumentIDType }) => {
+                          if (typeof item === 'object' && item?.id) {
+                            return item.id
+                          }
+                          return item
+                        },
+                      ) as DefaultDocumentIDType[]
 
                       if (variantTypeIDs.length === 0)
                         return {

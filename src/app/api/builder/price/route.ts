@@ -31,8 +31,8 @@ const addTotals = (a: MacroTotals, b: Partial<MacroTotals>) => ({
   protein: a.protein + (b.protein || 0),
   carbs: a.carbs + (b.carbs || 0),
   fat: a.fat + (b.fat || 0),
-  fiber: a.fiber + (b.fiber || 0),
-  sugar: a.sugar + (b.sugar || 0),
+  fiber: (a.fiber || 0) + (b.fiber || 0),
+  sugar: (a.sugar || 0) + (b.sugar || 0),
 })
 
 export async function POST(req: NextRequest) {

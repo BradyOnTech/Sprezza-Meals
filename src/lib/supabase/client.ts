@@ -5,6 +5,6 @@ export const createSupabaseBrowserClient = () =>
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
     {
-      cookieOptions: { lifetime: 60 * 60 * 24 * 7 },
+      cookieOptions: { maxAge: 60 * 60 * 24 * 7 },
     },
   )

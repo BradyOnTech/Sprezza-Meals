@@ -10,10 +10,18 @@ type AuthUser = {
   name?: string | null
 }
 
-type ResetPassword = (args: { password: string; passwordConfirm: string; token?: string }) => Promise<void>
+type ResetPassword = (args: {
+  password: string
+  passwordConfirm: string
+  token?: string
+}) => Promise<void>
 type ForgotPassword = (args: { email: string }) => Promise<void>
-type Create = (args: { email: string; password: string; passwordConfirm: string }) => Promise<AuthUser | null>
-type Login = (args: { email: string; password: string }) => Promise<AuthUser> // eslint-disable-line no-unused-vars
+type Create = (args: {
+  email: string
+  password: string
+  passwordConfirm: string
+}) => Promise<AuthUser | null>
+type Login = (args: { email: string; password: string }) => Promise<AuthUser>
 type Logout = () => Promise<void>
 
 type AuthContext = {
@@ -22,7 +30,7 @@ type AuthContext = {
   login: Login
   logout: Logout
   resetPassword: ResetPassword
-  setUser: (user: AuthUser | null) => void // eslint-disable-line no-unused-vars
+  setUser: (user: AuthUser | null) => void
   status: 'loggedIn' | 'loggedOut' | undefined
   user?: AuthUser | null
 }
@@ -115,9 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [supabase])
 
   useEffect(() => {
-    const {
-      data: authListener,
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(mapUser(session.user))
         setStatus('loggedIn')
@@ -185,6 +191,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   )
 }
 
-type UseAuth<T = AuthUser> = () => AuthContext // eslint-disable-line no-unused-vars
+type UseAuth = () => AuthContext
 
 export const useAuth: UseAuth = () => useContext(Context)

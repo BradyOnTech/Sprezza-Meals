@@ -29,7 +29,7 @@ export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
     register,
   } = useForm<FormData>({
     defaultValues: {
-      email: initialEmail || user?.email,
+      email: initialEmail || user?.email || '',
     },
   })
 

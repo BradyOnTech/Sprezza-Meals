@@ -9,15 +9,15 @@ import { useEffect, useRef } from 'react'
  */
 export function useIgnoredEffect(
   effect: () => void | (() => void),
-  triggerDeps: any[],
-  ignoredDeps: any[],
+  triggerDeps: unknown[],
+  ignoredDeps: unknown[],
 ) {
   const ignoredDepsRef = useRef(ignoredDeps)
 
   // Update ref when ignoredDeps change, but do not trigger the effect
   useEffect(() => {
     ignoredDepsRef.current = ignoredDeps
-  }, ignoredDeps)
+  }, [ignoredDeps])
 
-  useEffect(effect, triggerDeps)
+  useEffect(() => effect(), [...triggerDeps, ignoredDeps])
 }
