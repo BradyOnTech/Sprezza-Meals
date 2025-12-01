@@ -1056,7 +1056,6 @@ export interface MealCategory {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1073,7 +1072,6 @@ export interface DietaryTag {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1108,7 +1106,6 @@ export interface MealBase {
   image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1136,7 +1133,6 @@ export interface CustomizationCategory {
   slug: string;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1173,7 +1169,6 @@ export interface CustomizationOption {
   image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1301,7 +1296,6 @@ export interface MealPlan {
   image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1319,7 +1313,6 @@ export interface Testimonial {
   photo?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1706,7 +1699,6 @@ export interface MealCategoriesSelect<T extends boolean = true> {
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1719,7 +1711,6 @@ export interface DietaryTagsSelect<T extends boolean = true> {
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1749,7 +1740,6 @@ export interface MealBasesSelect<T extends boolean = true> {
   image?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1767,7 +1757,6 @@ export interface CustomizationCategoriesSelect<T extends boolean = true> {
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1799,7 +1788,6 @@ export interface CustomizationOptionsSelect<T extends boolean = true> {
   image?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1895,7 +1883,6 @@ export interface MealPlansSelect<T extends boolean = true> {
   image?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1909,7 +1896,6 @@ export interface TestimonialsSelect<T extends boolean = true> {
   photo?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2416,7 +2402,6 @@ export interface SiteSetting {
     | null;
   contactEmail?: string | null;
   contactPhone?: string | null;
-  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2493,7 +2478,6 @@ export interface SiteSettingsSelect<T extends boolean = true> {
       };
   contactEmail?: T;
   contactPhone?: T;
-  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

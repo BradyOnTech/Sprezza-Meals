@@ -96,7 +96,5 @@ export const CustomizationOptions: CollectionConfig = {
       relationTo: 'media',
     },
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }

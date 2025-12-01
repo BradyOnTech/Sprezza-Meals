@@ -91,7 +91,5 @@ export const SiteSettings: GlobalConfig = {
       type: 'text',
     },
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }

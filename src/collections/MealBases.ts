@@ -84,7 +84,5 @@ export const MealBases: CollectionConfig = {
       relationTo: 'media',
     },
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }

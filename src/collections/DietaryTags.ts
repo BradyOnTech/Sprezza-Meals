@@ -23,7 +23,5 @@ export const DietaryTags: CollectionConfig = {
     },
     slugField(),
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }

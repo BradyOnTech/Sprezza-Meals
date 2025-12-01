@@ -48,7 +48,5 @@ export const MealCategories: CollectionConfig = {
     },
     slugField(),
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }

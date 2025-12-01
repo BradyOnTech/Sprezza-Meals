@@ -41,7 +41,5 @@ export const Testimonials: CollectionConfig = {
       relationTo: 'media',
     },
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }

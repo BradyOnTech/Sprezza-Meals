@@ -140,9 +140,5 @@ export const MealPlans: CollectionConfig = {
       relationTo: 'media',
     },
   ],
-  versions: {
-    drafts: {
-      autosave: true,
-    },
-  },
+  versions: false,
 }

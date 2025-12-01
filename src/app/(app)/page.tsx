@@ -41,11 +41,7 @@ export default async function HomePage() {
       },
       sort: '-updatedAt',
       where: {
-        and: [
-          { _status: { equals: 'published' } },
-          { 'flags.isActive': { equals: true } },
-          { 'flags.isFeatured': { equals: true } },
-        ],
+        and: [{ 'flags.isActive': { equals: true } }, { 'flags.isFeatured': { equals: true } }],
       },
     }),
     payload.find({
@@ -64,11 +60,7 @@ export default async function HomePage() {
       },
       sort: '-schedule.startDate',
       where: {
-        and: [
-          { _status: { equals: 'published' } },
-          { isActive: { equals: true } },
-          { isFeatured: { equals: true } },
-        ],
+        and: [{ isActive: { equals: true } }, { isFeatured: { equals: true } }],
       },
     }),
   ])
@@ -101,7 +93,8 @@ export default async function HomePage() {
               sauces
             </div>
             <div>
-              <span className="font-semibold text-foreground">Local</span> · Scottsdale prep + delivery
+              <span className="font-semibold text-foreground">Local</span> · Scottsdale prep +
+              delivery
             </div>
           </div>
         </div>
@@ -178,7 +171,9 @@ function MealPlanCard({ plan }: { plan: MealPlan }) {
         />
       ) : null}
       <div className="flex flex-1 flex-col gap-3 p-4">
-        {windowLabel ? <p className="text-xs uppercase text-muted-foreground">{windowLabel}</p> : null}
+        {windowLabel ? (
+          <p className="text-xs uppercase text-muted-foreground">{windowLabel}</p>
+        ) : null}
         <h3 className="text-lg font-semibold">{plan.title}</h3>
         {plan.tagline ? <p className="text-sm text-muted-foreground">{plan.tagline}</p> : null}
         <div className="mt-auto pt-2">

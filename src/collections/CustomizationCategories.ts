@@ -55,7 +55,5 @@ export const CustomizationCategories: CollectionConfig = {
     },
     slugField(),
   ],
-  versions: {
-    drafts: true,
-  },
+  versions: false,
 }
