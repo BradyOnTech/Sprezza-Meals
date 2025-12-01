@@ -112,7 +112,7 @@ export default async function FavoritesPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {planFavorites.map((fav) => {
-              const plan = fav.meal_plans && fav.meal_plans.length > 0 ? fav.meal_plans[0] : null
+              const plan = fav.meal_plans
               if (!plan) return null
               const image = plan.image && typeof plan.image !== 'number' ? plan.image : undefined
               return (
