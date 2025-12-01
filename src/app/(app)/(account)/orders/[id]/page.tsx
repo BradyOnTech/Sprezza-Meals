@@ -84,7 +84,9 @@ export default async function Order({ params }: PageProps) {
                     </p>
                     {item.metadata?.builder?.options ? (
                       <p className="text-xs text-muted-foreground">
-                        {item.metadata.builder.options.map((opt: any) => opt.name).join(', ')}
+                        {item.metadata.builder.options
+                          .map((opt: { name: string }) => opt.name)
+                          .join(', ')}
                       </p>
                     ) : null}
                   </div>
@@ -184,7 +186,24 @@ export default async function Order({ params }: PageProps) {
   )
 }
 
-function AddressDisplay({ address }: { address: any }) {
+function AddressDisplay({
+  address,
+}: {
+  address: {
+    id: string | number
+    title?: string | null
+    first_name?: string | null
+    last_name?: string | null
+    company?: string | null
+    addressLine1?: string | null
+    addressLine2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    phone?: string | null
+  }
+}) {
   if (!address) return <p className="text-sm text-muted-foreground">Not provided</p>
 
   const formatted = {

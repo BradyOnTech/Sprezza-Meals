@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   if (!meal) return notFound()
 
   const heroImage = typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
-  const canIndex = (meal as any)._status === 'published' && meal.flags?.isActive !== false
+  const canIndex = meal.flags?.isActive !== false
 
   return {
     description: meal.summary || undefined,
@@ -125,7 +125,7 @@ export default async function MealPage({ params }: Args) {
             <MealSummary meal={meal} />
             <div className="mt-4 flex items-center justify-between gap-4">
               <FavoriteToggle mealId={meal.id} />
-              <AddToCart product={meal as any} />
+              <AddToCart product={meal} />
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ function RelatedMeals({ meals }: { meals: Meal[] }) {
 }
 
 const queryMealBySlug = async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
+  const {} = await draftMode()
 
   const payload = await getPayload({ config: configPromise })
 

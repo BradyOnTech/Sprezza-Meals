@@ -21,7 +21,7 @@ export default async function PlansPage() {
       {plans && plans.length ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => (
-            <PlanGridItem key={plan.id} plan={plan as any} />
+            <PlanGridItem key={plan.id} plan={plan} />
           ))}
         </div>
       ) : (

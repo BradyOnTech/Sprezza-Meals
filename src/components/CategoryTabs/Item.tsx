@@ -10,7 +10,7 @@ type Props = {
 
 export function Item({ href, title }: Props) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
+
   const active = pathname === href
 
   const DynamicTag = active ? 'p' : Link

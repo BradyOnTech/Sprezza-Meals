@@ -35,7 +35,9 @@ export default async function ShopPage({ searchParams }: Props) {
 
   if (categoryParam) {
     try {
-      const categoryOr: any[] = [{ slug: { equals: categoryParam } }]
+      const categoryOr: Array<{ slug: { equals: string | number } }> = [
+        { slug: { equals: categoryParam } },
+      ]
       const asNumber = Number(categoryParam)
       if (Number.isFinite(asNumber)) {
         categoryOr.push({ id: { equals: asNumber } })
@@ -61,7 +63,7 @@ export default async function ShopPage({ searchParams }: Props) {
 
   if (tagParam) {
     try {
-      const tagOr: any[] = [{ slug: { equals: tagParam } }]
+      const tagOr: Array<{ slug: { equals: string | number } }> = [{ slug: { equals: tagParam } }]
       const asNumber = Number(tagParam)
       if (Number.isFinite(asNumber)) {
         tagOr.push({ id: { equals: asNumber } })
@@ -90,7 +92,14 @@ export default async function ShopPage({ searchParams }: Props) {
       : 'title'
 
   if (categoryParam === 'plans') {
-    let plans: any[] = []
+    let plans: Array<{
+      title: string
+      slug: string
+      tagline?: string | null
+      schedule?: any
+      image?: any
+      isActive: boolean
+    }> = []
     let planError: string | null = null
 
     try {
@@ -121,7 +130,7 @@ export default async function ShopPage({ searchParams }: Props) {
         },
       })
       plans = res.docs || []
-    } catch (err: any) {
+    } catch (err: unknown) {
       planError = 'Unable to load plans right now.'
       console.error(err)
     }
@@ -148,7 +157,7 @@ export default async function ShopPage({ searchParams }: Props) {
         {plans.length > 0 ? (
           <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan) => {
-              return <PlanGridItem key={plan.id} plan={plan as any} />
+              return <PlanGridItem key={plan.id} plan={plan} />
             })}
           </Grid>
         ) : null}
@@ -156,7 +165,23 @@ export default async function ShopPage({ searchParams }: Props) {
     )
   }
 
-  let meals: any[] = []
+  let meals: Array<{
+    id: string | number
+    title: string
+    slug: string
+    price: number
+    summary?: string | null
+    media?: any
+    categories?: any
+    dietaryTags?: any
+    mealBase?: any
+    customizationCategories?: any
+    price?: number
+    prepTimeMinutes?: number
+    servings?: number
+    flags?: any
+    nutrition?: any
+  }> = []
   let mealError: string | null = null
   try {
     const res = await payload.find({

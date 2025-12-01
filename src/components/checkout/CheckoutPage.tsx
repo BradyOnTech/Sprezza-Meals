@@ -16,7 +16,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 
 import { cssVariables } from '@/cssVariables'
 import { CheckoutForm } from '@/components/forms/CheckoutForm'
-import { useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
+import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -47,7 +47,7 @@ export const CheckoutPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [emailEditable, setEmailEditable] = useState(true)
   const [paymentData, setPaymentData] = useState<null | Record<string, unknown>>(null)
-  const { initiatePayment } = usePayments()
+
   const [addresses, setAddresses] = useState<SavedAddress[]>([])
   const [shippingAddress, setShippingAddress] = useState<SavedAddress>()
   const [billingAddress, setBillingAddress] = useState<SavedAddress>()
@@ -493,7 +493,7 @@ export const CheckoutPage: React.FC = () => {
         )}
 
         <Suspense fallback={<React.Fragment />}>
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - paymentData type is dynamic */}
           {paymentData && paymentData?.['clientSecret'] && (
             <div className="pb-16">
               <h2 className="font-medium text-3xl">Payment</h2>
@@ -595,7 +595,7 @@ export const CheckoutPage: React.FC = () => {
             if (typeof item.product === 'object' && item.product) {
               const {
                 product,
-                product: { id, meta, title, gallery },
+                product: { meta, title, gallery },
                 quantity,
                 variant,
               } = item

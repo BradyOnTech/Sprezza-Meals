@@ -127,7 +127,7 @@ export const seed = async ({
   ])
 
   payload.logger.info('— Creating meal bases')
-  const [cilantroRiceBase, cauliflowerRiceBase] = await Promise.all([
+  const [cilantroRiceBase] = await Promise.all([
     payload.create({
       collection: 'meal-bases',
       data: {
@@ -194,7 +194,7 @@ export const seed = async ({
   ])
 
   payload.logger.info('— Creating customization options')
-  const [chickenOption, steakOption, picoOption, cornOption, chipotleOption] = await Promise.all([
+  const [] = await Promise.all([
     payload.create({
       collection: 'customization-options',
       data: {

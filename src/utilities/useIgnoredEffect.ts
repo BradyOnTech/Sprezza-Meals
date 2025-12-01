@@ -19,5 +19,5 @@ export function useIgnoredEffect(
     ignoredDepsRef.current = ignoredDeps
   }, [ignoredDeps])
 
-  useEffect(() => effect(), [...triggerDeps, ignoredDeps])
+  useEffect(() => effect(), [effect, ...triggerDeps, ...ignoredDeps])
 }

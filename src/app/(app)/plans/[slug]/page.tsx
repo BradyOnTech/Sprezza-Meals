@@ -59,27 +59,34 @@ export default async function PlanDetail({ params }: Params) {
         <h2 className="text-2xl font-semibold">Schedule</h2>
         {plan.items && plan.items.length ? (
           <ul className="grid gap-3 md:grid-cols-2">
-            {plan.items.map((item: any) => (
-              <li key={item.id} className="rounded-lg border p-4 bg-primary-foreground">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                  {item.dayOfWeek} · {item.mealTime}
-                </p>
-                <h3 className="text-lg font-semibold">
-                  {item.meal && typeof item.meal === 'object' ? item.meal.title : 'Meal'}
-                </h3>
-                {item.meal && typeof item.meal === 'object' && (
-                  <Link
-                    href={`/products/${(item.meal as any).slug}`}
-                    className="text-sm text-primary underline"
-                  >
-                    View meal
-                  </Link>
-                )}
-                {item.notes ? (
-                  <p className="mt-2 text-sm text-muted-foreground">{item.notes}</p>
-                ) : null}
-              </li>
-            ))}
+            {plan.items.map(
+              (item: {
+                id: string | number
+                dayOfWeek: string
+                mealTime: string
+                meal?: { title: string } | null
+              }) => (
+                <li key={item.id} className="rounded-lg border p-4 bg-primary-foreground">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                    {item.dayOfWeek} · {item.mealTime}
+                  </p>
+                  <h3 className="text-lg font-semibold">
+                    {item.meal && typeof item.meal === 'object' ? item.meal.title : 'Meal'}
+                  </h3>
+                  {item.meal && typeof item.meal === 'object' && (
+                    <Link
+                      href={`/products/${item.meal?.slug}`}
+                      className="text-sm text-primary underline"
+                    >
+                      View meal
+                    </Link>
+                  )}
+                  {item.notes ? (
+                    <p className="mt-2 text-sm text-muted-foreground">{item.notes}</p>
+                  ) : null}
+                </li>
+              ),
+            )}
           </ul>
         ) : (
           <p className="text-muted-foreground">No items scheduled.</p>

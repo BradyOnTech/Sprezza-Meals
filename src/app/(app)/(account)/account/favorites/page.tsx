@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { Meal } from '@/payload-types'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -17,8 +18,22 @@ type MealFavorite = {
     slug: string
     price: number
     summary?: string | null
-    media?: any
+    media?: Meal['media'] | null
   }[]
+}
+
+type MealPlanFavoriteType = {
+  id: number
+  created_at: string
+  meal_plans: {
+    id: number
+    title: string
+    slug: string
+    price: number
+    summary?: string | null
+    tagline?: string | null
+    image?: { id: number; url: string } | null
+  } | null
 }
 
 type MealPlanFavorite = {
@@ -29,7 +44,7 @@ type MealPlanFavorite = {
     title: string
     slug: string
     tagline?: string | null
-    image?: any
+    image?: { id: number; url: string } | null
   } | null
 }
 
@@ -57,7 +72,7 @@ export default async function FavoritesPage() {
   ])
 
   const mealFavorites = (mealFavoritesRes.data || []) as unknown as MealFavorite[]
-  const planFavorites = (planFavoritesRes.data || []) as unknown as MealPlanFavorite[]
+  const planFavorites = (planFavoritesRes.data || []) as unknown as MealPlanFavoriteType[]
 
   const hasFavorites = mealFavorites.length > 0 || planFavorites.length > 0
 
