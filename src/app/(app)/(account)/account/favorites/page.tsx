@@ -18,7 +18,7 @@ type MealFavorite = {
     price: number
     summary?: string | null
     media?: any
-  } | null
+  }[]
 }
 
 type MealPlanFavorite = {
@@ -56,8 +56,8 @@ export default async function FavoritesPage() {
       .order('created_at', { ascending: false }),
   ])
 
-  const mealFavorites = (mealFavoritesRes.data || []) as MealFavorite[]
-  const planFavorites = (planFavoritesRes.data || []) as MealPlanFavorite[]
+  const mealFavorites = (mealFavoritesRes.data || []) as unknown as MealFavorite[]
+  const planFavorites = (planFavoritesRes.data || []) as unknown as MealPlanFavorite[]
 
   const hasFavorites = mealFavorites.length > 0 || planFavorites.length > 0
 
@@ -65,9 +65,7 @@ export default async function FavoritesPage() {
     <div className="space-y-10">
       <div className="border p-8 rounded-lg bg-primary-foreground">
         <h1 className="text-3xl font-medium mb-4">Favorites</h1>
-        <p className="text-muted-foreground">
-          Meals and plans you&apos;ve saved for quick access.
-        </p>
+        <p className="text-muted-foreground">Meals and plans you&apos;ve saved for quick access.</p>
       </div>
 
       {!hasFavorites && (
@@ -94,8 +92,8 @@ export default async function FavoritesPage() {
           </div>
           <Grid className="grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {mealFavorites.map((fav) => {
-              if (!fav.meals) return null
-              return <MealGridItem key={fav.id} meal={fav.meals} />
+              if (!fav.meals || fav.meals.length === 0) return null
+              return <MealGridItem key={fav.id} meal={fav.meals[0]} />
             })}
           </Grid>
         </section>
@@ -114,10 +112,9 @@ export default async function FavoritesPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {planFavorites.map((fav) => {
-              const plan = fav.meal_plans
+              const plan = fav.meal_plans && fav.meal_plans.length > 0 ? fav.meal_plans[0] : null
               if (!plan) return null
-              const image =
-                plan.image && typeof plan.image !== 'number' ? plan.image : undefined
+              const image = plan.image && typeof plan.image !== 'number' ? plan.image : undefined
               return (
                 <div
                   key={fav.id}
