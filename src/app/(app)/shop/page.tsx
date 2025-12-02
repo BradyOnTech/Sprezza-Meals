@@ -35,9 +35,8 @@ export default async function ShopPage({ searchParams }: Props) {
 
   if (categoryParam) {
     try {
-      const categoryOr: Array<{ slug: { equals: string | number } }> = [
-        { slug: { equals: categoryParam } },
-      ]
+      const categoryOr: Array<{ slug: { equals: string | number } } | { id: { equals: number } }> =
+        [{ slug: { equals: categoryParam } }]
       const asNumber = Number(categoryParam)
       if (Number.isFinite(asNumber)) {
         categoryOr.push({ id: { equals: asNumber } })
@@ -63,7 +62,9 @@ export default async function ShopPage({ searchParams }: Props) {
 
   if (tagParam) {
     try {
-      const tagOr: Array<{ slug: { equals: string | number } }> = [{ slug: { equals: tagParam } }]
+      const tagOr: Array<{ slug: { equals: string | number } } | { id: { equals: number } }> = [
+        { slug: { equals: tagParam } },
+      ]
       const asNumber = Number(tagParam)
       if (Number.isFinite(asNumber)) {
         tagOr.push({ id: { equals: asNumber } })
@@ -93,12 +94,15 @@ export default async function ShopPage({ searchParams }: Props) {
 
   if (categoryParam === 'plans') {
     let plans: Array<{
+      id: number
       title: string
       slug: string
       tagline?: string | null
       schedule?: any
       image?: any
-      isActive: boolean
+      isActive?: boolean | null
+      updatedAt: string
+      createdAt: string
     }> = []
     let planError: string | null = null
 
@@ -129,7 +133,7 @@ export default async function ShopPage({ searchParams }: Props) {
           ],
         },
       })
-      plans = res.docs || []
+      plans = (res.docs || []) as any
     } catch (err: unknown) {
       planError = 'Unable to load plans right now.'
       console.error(err)
@@ -157,7 +161,7 @@ export default async function ShopPage({ searchParams }: Props) {
         {plans.length > 0 ? (
           <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan) => {
-              return <PlanGridItem key={plan.id} plan={plan} />
+              return <PlanGridItem key={plan.id} plan={plan as any} />
             })}
           </Grid>
         ) : null}
@@ -176,7 +180,6 @@ export default async function ShopPage({ searchParams }: Props) {
     dietaryTags?: any
     mealBase?: any
     customizationCategories?: any
-    price?: number
     prepTimeMinutes?: number
     servings?: number
     flags?: any
@@ -260,7 +263,7 @@ export default async function ShopPage({ searchParams }: Props) {
       {meals.length > 0 ? (
         <Grid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {meals.map((meal) => {
-            return <MealGridItem key={meal.id} meal={meal} />
+            return <MealGridItem key={meal.id} meal={meal as any} />
           })}
         </Grid>
       ) : null}

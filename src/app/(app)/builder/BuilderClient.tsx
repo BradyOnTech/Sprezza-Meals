@@ -97,8 +97,8 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
         }
         const data = (await res.json()) as TotalsResponse
         setTotals(data)
-      } catch (_err) {
-        setError(err?.message || 'Unable to calculate totals.')
+      } catch (err) {
+        setError((err as Error)?.message || 'Unable to calculate totals.')
       } finally {
         setLoading(false)
       }

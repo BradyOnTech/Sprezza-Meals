@@ -108,7 +108,7 @@ export default async function FavoritesPage() {
           <Grid className="grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {mealFavorites.map((fav) => {
               if (!fav.meals || fav.meals.length === 0) return null
-              return <MealGridItem key={fav.id} meal={fav.meals[0]} />
+              return <MealGridItem key={fav.id} meal={fav.meals[0] as any} />
             })}
           </Grid>
         </section>
@@ -139,7 +139,7 @@ export default async function FavoritesPage() {
                     <Media
                       className="h-40 w-full overflow-hidden"
                       imgClassName="h-full w-full object-cover"
-                      resource={image}
+                      resource={image as any}
                     />
                   ) : null}
                   <div className="flex flex-1 flex-col gap-3 p-4">

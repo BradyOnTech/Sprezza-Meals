@@ -75,14 +75,14 @@ export default async function PlanDetail({ params }: Params) {
                   </h3>
                   {item.meal && typeof item.meal === 'object' && (
                     <Link
-                      href={`/products/${item.meal?.slug}`}
+                      href={`/products/${(item.meal as any)?.slug}`}
                       className="text-sm text-primary underline"
                     >
                       View meal
                     </Link>
                   )}
-                  {item.notes ? (
-                    <p className="mt-2 text-sm text-muted-foreground">{item.notes}</p>
+                  {(item as any).notes ? (
+                    <p className="mt-2 text-sm text-muted-foreground">{(item as any).notes}</p>
                   ) : null}
                 </li>
               ),

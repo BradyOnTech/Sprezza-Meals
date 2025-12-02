@@ -1,7 +1,7 @@
 'use client'
 import clsx from 'clsx'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 type Props = {
   href: string
