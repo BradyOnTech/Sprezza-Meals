@@ -230,6 +230,15 @@ export const Meals: CollectionConfig = {
         return query
       },
     },
+    {
+      name: 'reviews',
+      type: 'relationship',
+      relationTo: 'reviews',
+      hasMany: true,
+      admin: {
+        description: 'Reviews for this meal',
+      },
+    },
   ],
   versions: {
     drafts: false,

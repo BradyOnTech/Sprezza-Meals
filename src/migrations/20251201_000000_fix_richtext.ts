@@ -63,18 +63,21 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     }
   }
 
-  // Drop version tables since versions are disabled
-  await db.execute(sql`DROP TABLE IF EXISTS "_meals_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_meals_v_rels"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_meal_categories_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_dietary_tags_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_meal_bases_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_customization_categories_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_customization_options_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_meal_plans_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_meal_plans_v_rels"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_testimonials_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_site_settings_v"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_site_settings_v_version_how_it_works"`)
-  await db.execute(sql`DROP TABLE IF EXISTS "_site_settings_v_version_faq"`)
+  // Drop version tables since versions are disabled (handle dependencies properly)
+  // Drop child tables first that reference parent version tables
+  await db.execute(sql`DROP TABLE IF EXISTS "_meals_v_rels" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_meal_plans_v_rels" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_site_settings_v_version_how_it_works" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_site_settings_v_version_faq" CASCADE`)
+
+  // Then drop parent version tables
+  await db.execute(sql`DROP TABLE IF EXISTS "_meals_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_meal_categories_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_dietary_tags_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_meal_bases_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_customization_categories_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_customization_options_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_meal_plans_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_testimonials_v" CASCADE`)
+  await db.execute(sql`DROP TABLE IF EXISTS "_site_settings_v" CASCADE`)
 }

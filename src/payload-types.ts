@@ -84,6 +84,7 @@ export interface Config {
     testimonials: Testimonial;
     categories: Category;
     media: Media;
+    reviews: Review;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -125,6 +126,7 @@ export interface Config {
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -1246,6 +1248,64 @@ export interface Meal {
       | null;
   };
   relatedMeals?: (number | Meal)[] | null;
+  /**
+   * Reviews for this meal
+   */
+  reviews?: (number | Review)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  /**
+   * Brief title for the review
+   */
+  title: string;
+  /**
+   * Rating from 1 to 5 stars
+   */
+  rating: number;
+  /**
+   * Detailed review comment
+   */
+  comment: string;
+  /**
+   * The meal being reviewed
+   */
+  meal: number | Meal;
+  /**
+   * User who wrote the review (for authenticated users)
+   */
+  user?: (number | null) | User;
+  /**
+   * Name for guest reviewers
+   */
+  guestName?: string | null;
+  /**
+   * Images uploaded by the reviewer
+   */
+  images?:
+    | {
+        image: number | Media;
+        /**
+         * Optional caption for the image
+         */
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Whether the reviewer has purchased this meal
+   */
+  isVerifiedPurchase?: boolean | null;
+  /**
+   * Number of users who found this review helpful
+   */
+  helpfulCount?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1402,6 +1462,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1849,6 +1913,7 @@ export interface MealsSelect<T extends boolean = true> {
             };
       };
   relatedMeals?: T;
+  reviews?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1926,6 +1991,29 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  title?: T;
+  rating?: T;
+  comment?: T;
+  meal?: T;
+  user?: T;
+  guestName?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  isVerifiedPurchase?: T;
+  helpfulCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

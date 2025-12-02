@@ -1,4 +1,4 @@
-import type { Media, Meal, MealPlan, SiteSettings } from '@/payload-types'
+import type { Media, Meal, MealPlan, SiteSetting } from '@/payload-types'
 
 import { Grid } from '@/components/Grid'
 import { MealGridItem } from '@/components/ProductGridItem'

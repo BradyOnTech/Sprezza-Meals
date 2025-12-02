@@ -5,6 +5,7 @@ import { Gallery } from '@/components/product/Gallery'
 import { MealSummary } from '@/components/meal/MealSummary'
 import { FavoriteToggle } from '@/components/favorites/FavoriteToggle'
 import { AddToCart } from '@/components/Cart/AddToCart'
+import { ReviewsSection } from '@/components/reviews/ReviewsSection'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -131,6 +132,8 @@ export default async function MealPage({ params }: Args) {
           </div>
         </div>
       </div>
+
+      <ReviewsSection mealId={meal.id.toString()} />
 
       {relatedMeals.length ? (
         <div className="container">

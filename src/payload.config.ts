@@ -27,6 +27,7 @@ import { MealPlans } from '@/collections/MealPlans'
 import { Meals } from '@/collections/Meals'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
+import { Reviews } from '@/collections/Reviews'
 import { Testimonials } from '@/collections/Testimonials'
 import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
@@ -62,6 +63,7 @@ export default buildConfig({
     Testimonials,
     Categories,
     Media,
+    Reviews,
   ],
   db: postgresAdapter({
     pool: {
