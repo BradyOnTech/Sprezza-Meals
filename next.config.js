@@ -15,6 +15,10 @@ const nextConfig = {
           protocol: url.protocol.replace(':', ''),
         }
       }),
+      {
+        protocol: 'https',
+        hostname: 'pub-*.blob.vercel-storage.com',
+      },
     ],
   },
   // Disable strict mode to avoid hydration mismatches in Payload admin UI

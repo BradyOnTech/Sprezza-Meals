@@ -37,5 +37,7 @@ export const Media: CollectionConfig = {
   ],
   upload: {
     disableLocalStorage: true,
+    staticURL: '/api/media/file',
+    staticDir: 'media',
   },
 }
