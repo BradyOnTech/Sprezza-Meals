@@ -53,11 +53,19 @@ export function BuilderCartProvider({ children }: { children: React.ReactNode })
   }, [items])
 
   const addItem = (item: Omit<BuilderCartItem, 'id' | 'quantity'>) => {
+    const generateId = () => {
+      try {
+        return crypto.randomUUID()
+      } catch {
+        return Math.random().toString(36).substr(2, 9)
+      }
+    }
+
     setItems((prev) => [
       ...prev,
       {
         ...item,
-        id: crypto.randomUUID(),
+        id: generateId(),
         quantity: 1,
       },
     ])
