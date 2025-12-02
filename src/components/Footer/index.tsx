@@ -1,4 +1,4 @@
-import type { Footer } from '@/payload-types'
+import type { Footer, SiteSetting } from '@/payload-types'
 
 import { FooterMenu } from '@/components/Footer/menu'
 import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
@@ -10,7 +10,10 @@ import { LogoIcon } from '@/components/icons/logo'
 const { COMPANY_NAME, SITE_NAME } = process.env
 
 export async function Footer() {
-  const footer: Footer = await getCachedGlobal('footer', 1)()
+  const [footer, siteSettings] = (await Promise.all([
+    getCachedGlobal('footer', 1)(),
+    getCachedGlobal('site-settings', 1)(),
+  ])) as [Footer, SiteSetting]
   const menu = footer.navItems || []
   const currentYear = new Date().getFullYear()
   const copyrightDate = 2023 + (currentYear > 2023 ? `-${currentYear}` : '')
@@ -43,6 +46,22 @@ export async function Footer() {
             <FooterMenu menu={menu} />
           </Suspense>
           <div className="md:ml-auto flex flex-col gap-4 items-end">
+            {siteSettings?.contactEmail && (
+              <a
+                href={`mailto:${siteSettings.contactEmail}`}
+                className="text-sm text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
+              >
+                {siteSettings.contactEmail}
+              </a>
+            )}
+            {siteSettings?.contactPhone && (
+              <a
+                href={`tel:${siteSettings.contactPhone}`}
+                className="text-sm text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
+              >
+                {siteSettings.contactPhone}
+              </a>
+            )}
             <ThemeSelector />
           </div>
         </div>

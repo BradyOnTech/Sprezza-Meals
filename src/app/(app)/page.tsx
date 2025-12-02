@@ -1,9 +1,10 @@
-import type { Media, Meal, MealPlan } from '@/payload-types'
+import type { Media, Meal, MealPlan, SiteSettings } from '@/payload-types'
 
 import { Grid } from '@/components/Grid'
 import { MealGridItem } from '@/components/ProductGridItem'
 import { Button } from '@/components/ui/button'
 import { Media as MediaComponent } from '@/components/Media'
+import { getCachedGlobal } from '@/utilities/getGlobals'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
@@ -22,7 +23,10 @@ const formatWindow = (schedule?: MealPlan['schedule']) => {
 }
 
 export default async function HomePage() {
-  const payload = await getPayload({ config: configPromise })
+  const [payload, siteSettings] = await Promise.all([
+    getPayload({ config: configPromise }),
+    getCachedGlobal('site-settings', 1)(),
+  ])
 
   const [featuredMeals, featuredPlans] = await Promise.all([
     payload.find({
@@ -30,15 +34,6 @@ export default async function HomePage() {
       depth: 1,
       limit: 6,
       overrideAccess: false,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        summary: true,
-        price: true,
-        media: true,
-        flags: true,
-      },
       sort: '-updatedAt',
       where: {
         and: [{ 'flags.isActive': { equals: true } }, { 'flags.isFeatured': { equals: true } }],
@@ -49,15 +44,6 @@ export default async function HomePage() {
       depth: 1,
       limit: 3,
       overrideAccess: false,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        tagline: true,
-        schedule: true,
-        image: true,
-        isFeatured: true,
-      },
       sort: '-schedule.startDate',
       where: {
         and: [{ isActive: { equals: true } }, { isFeatured: { equals: true } }],
@@ -69,16 +55,28 @@ export default async function HomePage() {
     <div className="space-y-16 pb-16">
       <section className="border-b bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="container flex flex-col gap-6 py-16 md:py-24">
-          <p className="text-sm uppercase tracking-[0.2em] text-primary/70">Scottsdale meal prep</p>
+          {siteSettings.heroSubtitle && (
+            <p className="text-sm uppercase tracking-[0.2em] text-primary/70">
+              {siteSettings.heroSubtitle}
+            </p>
+          )}
           <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-            Chef-prepped meals, ready when you are.
+            {siteSettings.heroTitle || 'Chef-prepped meals, ready when you are.'}
           </h1>
-          <p className="max-w-2xl text-lg text-muted-foreground">
-            Rotating bowls and tacos with macro-friendly builds, delivered on your schedule.
-          </p>
+          {siteSettings.heroImage && typeof siteSettings.heroImage !== 'number' && (
+            <div className="my-8">
+              <MediaComponent
+                className="h-64 w-full max-w-2xl rounded-lg"
+                imgClassName="object-cover"
+                resource={siteSettings.heroImage}
+              />
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <Button asChild size="lg">
-              <Link href="/shop">Shop meals</Link>
+              <Link href={siteSettings.heroCtaHref || '/shop'}>
+                {siteSettings.heroCtaLabel || 'Shop meals'}
+              </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/shop">View weekly menu</Link>
@@ -127,6 +125,24 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {siteSettings.howItWorks && siteSettings.howItWorks.length > 0 && (
+        <section className="container space-y-8 py-16">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold">How It Works</h2>
+            <p className="mt-2 text-muted-foreground">Simple steps to fresh, chef-prepped meals</p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {siteSettings.howItWorks.map((step, index) => (
+              <div key={index} className="text-center">
+                {step.icon && <div className="mb-4 text-4xl">{step.icon}</div>}
+                <h3 className="mb-2 text-lg font-semibold">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="container space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
