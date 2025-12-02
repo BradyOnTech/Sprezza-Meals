@@ -92,7 +92,8 @@ export default async function MealPage({ params }: Args) {
 
   const relatedMeals =
     meal.relatedMeals?.filter(
-      (relatedMeal): relatedMeal is Meal => typeof relatedMeal === 'object',
+      (relatedMeal): relatedMeal is Meal =>
+        typeof relatedMeal === 'object' && relatedMeal.flags?.isActive !== false,
     ) ?? []
 
   return (
@@ -151,7 +152,25 @@ function RelatedMeals({ meals }: { meals: Meal[] }) {
           const relatedImage =
             typeof meal.media?.image === 'object' ? (meal.media.image as Media) : undefined
 
-          if (!relatedImage) return null
+          if (!relatedImage) {
+            return (
+              <li
+                className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 border border-gray-300 flex items-center justify-center"
+                key={meal.id}
+              >
+                <Link
+                  className="relative h-full w-full flex items-center justify-center"
+                  href={`/products/${meal.slug}`}
+                >
+                  <div className="text-center p-4">
+                    <div className="text-sm font-medium">{meal.title}</div>
+                    <div className="text-xs text-gray-500">No image</div>
+                    <div className="text-sm font-bold">${meal.price}</div>
+                  </div>
+                </Link>
+              </li>
+            )
+          }
 
           return (
             <li
@@ -182,7 +201,7 @@ const queryMealBySlug = async ({ slug }: { slug: string }) => {
 
   const result = await payload.find({
     collection: 'meals',
-    depth: 3,
+    depth: 2,
     draft: true,
     limit: 1,
     overrideAccess: true,
