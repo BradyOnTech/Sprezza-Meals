@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { Review } from '@/payload-types'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,23 +65,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the review
-    const reviewData: any = {
-      title,
-      rating,
-      comment,
-      meal: mealId,
-      images,
-    }
-
-    if (userId) {
-      reviewData.user = userId
-    } else {
-      reviewData.guestName = guestName
-    }
-
     const review = await payload.create({
       collection: 'reviews',
-      data: reviewData,
+      data: {
+        title,
+        rating,
+        comment,
+        meal: parseInt(mealId, 10),
+        images,
+        ...(userId && { user: parseInt(userId, 10) }),
+        ...(guestName && { guestName }),
+      },
     })
 
     return NextResponse.json(review, { status: 201 })

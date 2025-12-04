@@ -36,7 +36,7 @@ type MealPlanFavoriteType = {
   } | null
 }
 
-type MealPlanFavorite = {
+type _MealPlanFavorite = {
   id: number
   created_at: string
   meal_plans: {
@@ -108,7 +108,7 @@ export default async function FavoritesPage() {
           <Grid className="grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {mealFavorites.map((fav) => {
               if (!fav.meals || fav.meals.length === 0) return null
-              return <MealGridItem key={fav.id} meal={fav.meals[0] as any} />
+              return <MealGridItem key={fav.id} meal={fav.meals[0] as Meal} />
             })}
           </Grid>
         </section>

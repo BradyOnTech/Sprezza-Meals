@@ -264,7 +264,7 @@ export function BuilderClient({ bases, categories }: BuilderProps) {
                 })),
                 totals: totals.totals,
               })
-            } catch (err) {
+            } catch (_err) {
               setError('Unable to add to cart.')
             }
           }}

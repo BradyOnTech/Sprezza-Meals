@@ -31,6 +31,7 @@ import { Pages } from '@/collections/Pages'
 import { Reviews } from '@/collections/Reviews'
 import { Testimonials } from '@/collections/Testimonials'
 import { Users } from '@/collections/Users'
+import { DeliverySettings } from '@/globals/DeliverySettings'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
 import { SiteSettings } from '@/globals/SiteSettings'
@@ -118,7 +119,7 @@ export default buildConfig({
   }),
   //email: nodemailerAdapter(),
   endpoints: [],
-  globals: [Header, Footer, SiteSettings],
+  globals: [Header, Footer, SiteSettings, DeliverySettings],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

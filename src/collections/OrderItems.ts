@@ -82,12 +82,12 @@ export const OrderItems: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      ({ siblingData }) => {
+      ({ data }) => {
         // Calculate total price
-        if (siblingData.unit_price && siblingData.quantity) {
-          siblingData.total_price = siblingData.unit_price * siblingData.quantity
+        if (data.unit_price && data.quantity) {
+          data.total_price = data.unit_price * data.quantity
         }
-        return siblingData
+        return data
       },
     ],
   },

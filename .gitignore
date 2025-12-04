@@ -44,5 +44,8 @@ public/media
 # Supabase CLI temp files
 supabase/.temp
 
+# Supabase CLI temp files
+supabase/.temp
+
 
 public

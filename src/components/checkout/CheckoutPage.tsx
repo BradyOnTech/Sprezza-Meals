@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
 import { useTheme } from '@/providers/Theme'
-import { Elements } from '@stripe/react-stripe-js'
+import { Elements, PaymentElement } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { cssVariables } from '@/cssVariables'
-import { CheckoutForm } from '@/components/forms/CheckoutForm'
+
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
@@ -52,7 +52,7 @@ export const CheckoutPage: React.FC = () => {
   const [shippingAddress, setShippingAddress] = useState<SavedAddress>()
   const [billingAddress, setBillingAddress] = useState<SavedAddress>()
   const [billingAddressSameAsShipping, setBillingAddressSameAsShipping] = useState(true)
-  const [isProcessingPayment, setProcessingPayment] = useState(false)
+  const [isProcessingPayment] = useState(false)
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), [])
   const [tipAmount, setTipAmount] = useState<number>(0)
 
@@ -526,11 +526,7 @@ export const CheckoutPage: React.FC = () => {
                 stripe={stripe}
               >
                 <div className="flex flex-col gap-8">
-                  <CheckoutForm
-                    customerEmail={email}
-                    billingAddress={billingAddress as any}
-                    setProcessingPayment={setProcessingPayment}
-                  />
+                  <PaymentElement />
                   <Button
                     variant="ghost"
                     className="self-start"

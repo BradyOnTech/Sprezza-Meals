@@ -28,7 +28,6 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     {
       name: 'orderNumber',
       label: 'Order Number',
-      dbName: 'order_number',
       type: 'text',
       unique: true,
       admin: {
@@ -37,17 +36,17 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'customerPhone',
-      dbName: 'customer_phone',
+
       type: 'text',
     },
     {
       name: 'deliveryInstructions',
-      dbName: 'delivery_instructions',
+
       type: 'textarea',
     },
     {
       name: 'deliveryDate',
-      dbName: 'delivery_date',
+
       type: 'date',
       admin: {
         date: {
@@ -57,17 +56,17 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'deliveryTimeSlot',
-      dbName: 'delivery_time_slot',
+
       type: 'text',
     },
     {
       name: 'paymentIntentId',
-      dbName: 'payment_intent_id',
+
       type: 'text',
     },
     {
       name: 'deliveredAt',
-      dbName: 'delivered_at',
+
       type: 'date',
       admin: {
         date: {
@@ -77,14 +76,14 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'paymentStatus',
-      dbName: 'payment_status',
+
       type: 'select',
       defaultValue: 'pending',
       options: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'],
     },
     {
       name: 'subtotal',
-      dbName: 'subtotal',
+
       type: 'number',
       defaultValue: 0,
       admin: {
@@ -93,7 +92,7 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'tax',
-      dbName: 'tax',
+
       type: 'number',
       defaultValue: 0,
       admin: {
@@ -102,7 +101,7 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'deliveryFee',
-      dbName: 'delivery_fee',
+
       type: 'number',
       defaultValue: 0,
       admin: {
@@ -111,7 +110,7 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'tip',
-      dbName: 'tip',
+
       type: 'number',
       defaultValue: 0,
       admin: {

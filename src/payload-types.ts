@@ -165,11 +165,13 @@ export interface Config {
     header: Header;
     footer: Footer;
     'site-settings': SiteSetting;
+    'delivery-settings': DeliverySetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'delivery-settings': DeliverySettingsSelect<false> | DeliverySettingsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -2572,6 +2574,35 @@ export interface SiteSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-settings".
+ */
+export interface DeliverySetting {
+  id: number;
+  /**
+   * Postal address for delivery origin (used for display).
+   */
+  homeAddress: string;
+  /**
+   * Latitude of home location (decimal degrees).
+   */
+  homeLat: number;
+  /**
+   * Longitude of home location (decimal degrees).
+   */
+  homeLng: number;
+  /**
+   * Max delivery radius in miles.
+   */
+  radiusMiles: number;
+  /**
+   * Optional note shown to admins (not exposed to customers).
+   */
+  notes?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -2643,6 +2674,20 @@ export interface SiteSettingsSelect<T extends boolean = true> {
       };
   contactEmail?: T;
   contactPhone?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-settings_select".
+ */
+export interface DeliverySettingsSelect<T extends boolean = true> {
+  homeAddress?: T;
+  homeLat?: T;
+  homeLng?: T;
+  radiusMiles?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

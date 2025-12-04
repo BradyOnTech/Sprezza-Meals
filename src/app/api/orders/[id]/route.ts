@@ -4,8 +4,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params
   try {
     const supabase = await createSupabaseServerClient()
     const {
@@ -19,7 +20,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('orders')
       .select('*, order_items:orders_items(*)')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', session.user.id)
       .single()
 
@@ -42,8 +43,9 @@ type UpdateOrderBody = {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params
   try {
     const supabase = await createSupabaseServerClient()
     const {
@@ -67,7 +69,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('orders')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', session.user.id)
       .select()
       .single()

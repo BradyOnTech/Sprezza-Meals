@@ -1,32 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-
-type OrderItemInput = {
-  product_id?: number
-  meal_plan_id?: number
-  variant_id?: number
-  quantity?: number
-  unit_price?: number
-  total_price?: number
-  special_instructions?: string
-}
-
-type CreateOrderBody = {
-  customer_email?: string
-  customer_phone?: string
-  delivery_instructions?: string
-  delivery_date?: string
-  delivery_time_slot?: string
-  payment_intent_id?: string
-  tip?: number
-  tax?: number
-  delivery_fee?: number
-  items?: OrderItemInput[]
-}
+import type { CreateOrderBody } from './types'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
 
 const numberOrZero = (value: unknown) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : 0
+
+const toMiles = (meters: number) => meters / 1609.344
+
+const haversineMiles = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const R = 6371000 // meters
+  const φ1 = toRad(lat1)
+  const φ2 = toRad(lat2)
+  const Δφ = toRad(lat2 - lat1)
+  const Δλ = toRad(lon2 - lon1)
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  const d = R * c
+  return toMiles(d)
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,10 +67,6 @@ export async function POST(req: NextRequest) {
       data: { session },
     } = await supabase.auth.getSession()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = (await req.json()) as CreateOrderBody
     const {
       customer_email,
@@ -85,10 +79,53 @@ export async function POST(req: NextRequest) {
       tax,
       delivery_fee,
       items = [],
+      shipping_address,
+      billing_address,
+      request_approval,
+      payment_method_id,
+      stripe_customer_id,
     } = body
 
-    if (!customer_email && !session.user.email) {
+    if (!customer_email && !session?.user?.email) {
       return NextResponse.json({ error: 'customer_email is required' }, { status: 400 })
+    }
+
+    // Distance enforcement (if settings configured and shipping lat/lng present)
+    let allowCreation = true
+    let distanceMiles: number | null = null
+    let settings: any = null
+
+    if (shipping_address?.lat && shipping_address?.lng) {
+      const payload = await getPayload({ config: configPromise })
+      settings = await payload.findGlobal({ slug: 'delivery-settings' }).catch(() => null)
+      const radiusMiles = settings?.radiusMiles
+      const homeLat = settings?.homeLat
+      const homeLng = settings?.homeLng
+
+      if (
+        typeof radiusMiles === 'number' &&
+        typeof homeLat === 'number' &&
+        typeof homeLng === 'number'
+      ) {
+        distanceMiles = haversineMiles(homeLat, homeLng, shipping_address.lat, shipping_address.lng)
+        if (distanceMiles > radiusMiles && !request_approval) {
+          allowCreation = false
+        }
+      }
+    }
+
+    if (!allowCreation && distanceMiles !== null) {
+      return NextResponse.json(
+        {
+          error: 'out_of_radius',
+          message: `Delivery address is ${distanceMiles.toFixed(
+            1,
+          )} miles away; maximum allowed is within service radius.`,
+          distanceMiles,
+          allowedMiles: settings?.radiusMiles ?? null,
+        },
+        { status: 400 },
+      )
     }
 
     const preparedItems = Array.isArray(items) ? items : []
@@ -102,23 +139,29 @@ export async function POST(req: NextRequest) {
     const normalizedTax = numberOrZero(tax)
     const normalizedDeliveryFee = numberOrZero(delivery_fee)
     const normalizedTip = numberOrZero(tip)
+    const totalAmount = subtotal + normalizedTax + normalizedDeliveryFee + normalizedTip
 
     const { data: createdOrders, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: session.user.id,
-        customer_email: customer_email || session.user.email,
+        user_id: session?.user?.id || null,
+        customer_email: customer_email || session?.user?.email,
         customer_phone,
         delivery_instructions,
         delivery_date,
         delivery_time_slot,
         payment_intent_id,
+        amount: totalAmount,
         subtotal,
         tax: normalizedTax,
         delivery_fee: normalizedDeliveryFee,
         tip: normalizedTip,
+        shipping_address: shipping_address ?? null,
+        billing_address: billing_address ?? null,
         payment_status: payment_intent_id ? 'pending' : 'pending',
-        status: 'pending',
+        status: request_approval || !allowCreation ? 'pending_approval' : 'pending',
+        payment_method_id: payment_method_id || null,
+        stripe_customer_id: stripe_customer_id || null,
       })
       .select()
       .single()
