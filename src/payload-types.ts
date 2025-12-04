@@ -10,7 +10,20 @@
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "OrderStatus".
  */
-export type OrderStatus = ('processing' | 'completed' | 'cancelled' | 'refunded') | null;
+export type OrderStatus =
+  | (
+      | 'pending'
+      | 'confirmed'
+      | 'preparing'
+      | 'ready_for_delivery'
+      | 'out_for_delivery'
+      | 'delivered'
+      | 'processing'
+      | 'completed'
+      | 'cancelled'
+      | 'refunded'
+    )
+  | null;
 /**
  * Supported timezones in IANA format.
  *
@@ -85,6 +98,7 @@ export interface Config {
     categories: Category;
     media: Media;
     reviews: Review;
+    'order-items': OrderItem;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -127,6 +141,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    'order-items': OrderItemsSelect<false> | OrderItemsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -273,6 +288,18 @@ export interface Order {
   status?: OrderStatus;
   amount?: number | null;
   currency?: 'USD' | null;
+  orderNumber?: string | null;
+  customerPhone?: string | null;
+  deliveryInstructions?: string | null;
+  deliveryDate?: string | null;
+  deliveryTimeSlot?: string | null;
+  paymentIntentId?: string | null;
+  deliveredAt?: string | null;
+  paymentStatus?: ('pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded') | null;
+  subtotal?: number | null;
+  tax?: number | null;
+  deliveryFee?: number | null;
+  tip?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1376,6 +1403,25 @@ export interface Testimonial {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-items".
+ */
+export interface OrderItem {
+  id: number;
+  product_id?: (number | null) | Meal;
+  meal_plan_id?: (number | null) | MealPlan;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  /**
+   * Special instructions for this item
+   */
+  special_instructions?: string | null;
+  variant_id?: (number | null) | Variant;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1466,6 +1512,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reviews';
         value: number | Review;
+      } | null)
+    | ({
+        relationTo: 'order-items';
+        value: number | OrderItem;
       } | null)
     | ({
         relationTo: 'forms';
@@ -2017,6 +2067,21 @@ export interface ReviewsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-items_select".
+ */
+export interface OrderItemsSelect<T extends boolean = true> {
+  product_id?: T;
+  meal_plan_id?: T;
+  quantity?: T;
+  unit_price?: T;
+  total_price?: T;
+  special_instructions?: T;
+  variant_id?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -2323,6 +2388,18 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   amount?: T;
   currency?: T;
+  orderNumber?: T;
+  customerPhone?: T;
+  deliveryInstructions?: T;
+  deliveryDate?: T;
+  deliveryTimeSlot?: T;
+  paymentIntentId?: T;
+  deliveredAt?: T;
+  paymentStatus?: T;
+  subtotal?: T;
+  tax?: T;
+  deliveryFee?: T;
+  tip?: T;
   updatedAt?: T;
   createdAt?: T;
 }

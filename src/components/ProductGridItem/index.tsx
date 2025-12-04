@@ -26,6 +26,7 @@ export const MealGridItem: React.FC<Props> = ({ meal }) => {
           imgClassName={clsx('h-full w-full object-cover rounded-2xl', {
             'transition duration-300 ease-in-out group-hover:scale-102': true,
           })}
+          priority={true}
           resource={image}
           width={80}
         />

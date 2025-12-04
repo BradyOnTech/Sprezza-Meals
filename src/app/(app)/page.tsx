@@ -183,6 +183,7 @@ function MealPlanCard({ plan }: { plan: MealPlan }) {
         <MediaComponent
           className="h-40 w-full overflow-hidden"
           imgClassName="h-full w-full object-cover"
+          priority={true}
           resource={image}
         />
       ) : null}

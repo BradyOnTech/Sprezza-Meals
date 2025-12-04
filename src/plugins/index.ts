@@ -9,6 +9,7 @@ import { stripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
 
 import { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { ordersCollectionOverride } from '@/collections/Orders'
 import { ProductsCollection } from '@/collections/Products'
 import { adminOrCustomerOwner } from '@/access/adminOrCustomerOwner'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
@@ -87,6 +88,9 @@ export const plugins: Plugin[] = [
     },
     products: {
       productsCollectionOverride: ProductsCollection,
+    },
+    orders: {
+      ordersCollectionOverride,
     },
   }),
 ]
