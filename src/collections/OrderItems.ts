@@ -70,6 +70,16 @@ export const OrderItems: CollectionConfig = {
         description: 'Special instructions for this item',
       },
     },
+    {
+      name: 'order',
+      label: 'Order',
+      type: 'relationship',
+      relationTo: 'orders',
+      hasMany: false,
+      admin: {
+        readOnly: true,
+      },
+    },
     // Legacy fields for compatibility
     {
       name: 'variant_id',

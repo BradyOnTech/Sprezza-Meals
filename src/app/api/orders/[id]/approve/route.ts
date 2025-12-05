@@ -16,6 +16,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
   try {
     const supabase = await createSupabaseServerClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const roles = (session?.user?.app_metadata?.roles as string[] | undefined) || []
+    const isAdmin = roles.includes('admin')
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { data: order, error } = await supabase.from('orders').select('*').eq('id', id).single()
 
     if (error || !order) {

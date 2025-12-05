@@ -35,18 +35,24 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
       },
     },
     {
+      name: 'customer',
+      label: 'Customer',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
       name: 'customerPhone',
-
       type: 'text',
     },
     {
       name: 'deliveryInstructions',
-
       type: 'textarea',
     },
     {
       name: 'deliveryDate',
-
       type: 'date',
       admin: {
         date: {
@@ -56,12 +62,10 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'deliveryTimeSlot',
-
       type: 'text',
     },
     {
       name: 'paymentIntentId',
-
       type: 'text',
     },
     {
@@ -76,14 +80,12 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'paymentStatus',
-
       type: 'select',
       defaultValue: 'pending',
       options: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'],
     },
     {
       name: 'subtotal',
-
       type: 'number',
       defaultValue: 0,
       admin: {
@@ -92,7 +94,6 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'tax',
-
       type: 'number',
       defaultValue: 0,
       admin: {
@@ -101,7 +102,6 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'deliveryFee',
-
       type: 'number',
       defaultValue: 0,
       admin: {
@@ -110,14 +110,37 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
     },
     {
       name: 'tip',
-
       type: 'number',
       defaultValue: 0,
       admin: {
         step: 0.01,
       },
     },
+    {
+      name: 'shipping_address',
+      label: 'Shipping Address',
+      type: 'json',
+      admin: {
+        readOnly: true,
+        description: 'Read-only snapshot stored on the order',
+      },
+    },
+    {
+      name: 'billing_address',
+      label: 'Billing Address',
+      type: 'json',
+      admin: {
+        readOnly: true,
+        description: 'Read-only snapshot stored on the order',
+      },
+    },
   ]
+
+  const existingFieldNames = new Set(
+    (fieldsWithEnhancedStatus || defaultCollection.fields || [])
+      .filter((field) => 'name' in field)
+      .map((field) => (field as { name: string }).name),
+  )
 
   return {
     ...defaultCollection,
@@ -133,6 +156,11 @@ export const ordersCollectionOverride = ({ defaultCollection }: OverrideArgs): C
         'createdAt',
       ],
     },
-    fields: [...(fieldsWithEnhancedStatus || defaultCollection.fields || []), ...additionalFields],
+    // Only append missing fields to avoid DuplicateFieldName errors when the base
+    // collection already defines them.
+    fields: [
+      ...(fieldsWithEnhancedStatus || defaultCollection.fields || []),
+      ...additionalFields.filter((field) => 'name' in field && !existingFieldNames.has(field.name)),
+    ],
   }
 }

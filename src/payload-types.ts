@@ -85,20 +85,20 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
-    pages: Page;
-    'meal-categories': MealCategory;
-    'dietary-tags': DietaryTag;
-    'meal-bases': MealBase;
+    categories: Category;
     'customization-categories': CustomizationCategory;
     'customization-options': CustomizationOption;
-    meals: Meal;
+    'dietary-tags': DietaryTag;
+    'meal-bases': MealBase;
+    'meal-categories': MealCategory;
     'meal-plans': MealPlan;
-    testimonials: Testimonial;
-    categories: Category;
+    meals: Meal;
     media: Media;
-    reviews: Review;
     'order-items': OrderItem;
+    pages: Page;
+    reviews: Review;
+    testimonials: Testimonial;
+    users: User;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -128,20 +128,20 @@ export interface Config {
     };
   };
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    pages: PagesSelect<false> | PagesSelect<true>;
-    'meal-categories': MealCategoriesSelect<false> | MealCategoriesSelect<true>;
-    'dietary-tags': DietaryTagsSelect<false> | DietaryTagsSelect<true>;
-    'meal-bases': MealBasesSelect<false> | MealBasesSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
     'customization-categories': CustomizationCategoriesSelect<false> | CustomizationCategoriesSelect<true>;
     'customization-options': CustomizationOptionsSelect<false> | CustomizationOptionsSelect<true>;
-    meals: MealsSelect<false> | MealsSelect<true>;
+    'dietary-tags': DietaryTagsSelect<false> | DietaryTagsSelect<true>;
+    'meal-bases': MealBasesSelect<false> | MealBasesSelect<true>;
+    'meal-categories': MealCategoriesSelect<false> | MealCategoriesSelect<true>;
     'meal-plans': MealPlansSelect<false> | MealPlansSelect<true>;
-    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
-    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    meals: MealsSelect<false> | MealsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
-    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     'order-items': OrderItemsSelect<false> | OrderItemsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -215,6 +215,376 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-categories".
+ */
+export interface CustomizationCategory {
+  id: number;
+  name: string;
+  description?: string | null;
+  displayOrder?: number | null;
+  /**
+   * Optional: set a minimum selections rule for this category.
+   */
+  minSelections?: number | null;
+  /**
+   * Optional: set a maximum selections rule for this category.
+   */
+  maxSelections?: number | null;
+  isRequired?: boolean | null;
+  isActive?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-options".
+ */
+export interface CustomizationOption {
+  id: number;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  category: number | CustomizationCategory;
+  description?: string | null;
+  priceAdjustment: number;
+  weight?: number | null;
+  weightUnit?: ('g' | 'oz' | 'lb') | null;
+  /**
+   * Used for nutrition lookup, e.g. chicken breast, rice, black beans.
+   */
+  foodType?: string | null;
+  useAutoNutrition?: boolean | null;
+  nutrition?: {
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+    sugar?: number | null;
+  };
+  isDefault?: boolean | null;
+  isActive?: boolean | null;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dietary-tags".
+ */
+export interface DietaryTag {
+  id: number;
+  name: string;
+  description?: string | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-bases".
+ */
+export interface MealBase {
+  id: number;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  description?: string | null;
+  basePrice: number;
+  weight?: number | null;
+  weightUnit?: ('g' | 'oz' | 'lb') | null;
+  /**
+   * Used for nutrition lookup, e.g. jasmine rice, cauliflower rice.
+   */
+  foodType?: string | null;
+  useAutoNutrition?: boolean | null;
+  nutrition?: {
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+    sugar?: number | null;
+  };
+  isActive?: boolean | null;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-categories".
+ */
+export interface MealCategory {
+  id: number;
+  title: string;
+  description?: string | null;
+  /**
+   * Optional icon name or emoji to display with the category.
+   */
+  icon?: string | null;
+  displayOrder?: number | null;
+  isFeatured?: boolean | null;
+  isActive?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-plans".
+ */
+export interface MealPlan {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  tagline?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  schedule: {
+    startDate: string;
+    endDate: string;
+  };
+  isFeatured?: boolean | null;
+  isActive?: boolean | null;
+  items?:
+    | {
+        dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+        mealTime: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+        meal: number | Meal;
+        notes?: string | null;
+        displayOrder?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meals".
+ */
+export interface Meal {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  summary?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  ingredients?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  categories: (number | MealCategory)[];
+  dietaryTags?: (number | DietaryTag)[] | null;
+  /**
+   * Optional base to pair with customizations.
+   */
+  mealBase?: (number | null) | MealBase;
+  /**
+   * Limit builder options for this meal (otherwise use all active categories).
+   */
+  customizationCategories?: (number | CustomizationCategory)[] | null;
+  price: number;
+  prepTimeMinutes?: number | null;
+  servings?: number | null;
+  availability?: {
+    startDate?: string | null;
+    endDate?: string | null;
+  };
+  flags?: {
+    isFeatured?: boolean | null;
+    isActive?: boolean | null;
+  };
+  nutrition?: {
+    useAutoNutrition?: boolean | null;
+    weight?: number | null;
+    weightUnit?: ('g' | 'oz' | 'lb') | null;
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+    sugar?: number | null;
+  };
+  media: {
+    image: number | Media;
+    gallery?:
+      | {
+          image: number | Media;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  relatedMeals?: (number | Meal)[] | null;
+  /**
+   * Reviews for this meal
+   */
+  reviews?: (number | Review)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  /**
+   * Brief title for the review
+   */
+  title: string;
+  /**
+   * Rating from 1 to 5 stars
+   */
+  rating: number;
+  /**
+   * Detailed review comment
+   */
+  comment: string;
+  /**
+   * The meal being reviewed
+   */
+  meal: number | Meal;
+  /**
+   * User who wrote the review (for authenticated users)
+   */
+  user?: (number | null) | User;
+  /**
+   * Name for guest reviewers
+   */
+  guestName?: string | null;
+  /**
+   * Images uploaded by the reviewer
+   */
+  images?:
+    | {
+        image: number | Media;
+        /**
+         * Optional caption for the image
+         */
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Whether the reviewer has purchased this meal
+   */
+  isVerifiedPurchase?: boolean | null;
+  /**
+   * Number of users who found this review helpful
+   */
+  helpfulCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -302,6 +672,30 @@ export interface Order {
   tax?: number | null;
   deliveryFee?: number | null;
   tip?: number | null;
+  /**
+   * Read-only snapshot stored on the order
+   */
+  shipping_address?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Read-only snapshot stored on the order
+   */
+  billing_address?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -364,40 +758,6 @@ export interface Product {
   createdAt: string;
   deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  caption?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -637,21 +997,6 @@ export interface ArchiveBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'archive';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: number;
-  title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1067,322 +1412,21 @@ export interface Address {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meal-categories".
+ * via the `definition` "order-items".
  */
-export interface MealCategory {
+export interface OrderItem {
   id: number;
-  title: string;
-  description?: string | null;
+  product_id?: (number | null) | Meal;
+  meal_plan_id?: (number | null) | MealPlan;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
   /**
-   * Optional icon name or emoji to display with the category.
+   * Special instructions for this item
    */
-  icon?: string | null;
-  displayOrder?: number | null;
-  isFeatured?: boolean | null;
-  isActive?: boolean | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "dietary-tags".
- */
-export interface DietaryTag {
-  id: number;
-  name: string;
-  description?: string | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meal-bases".
- */
-export interface MealBase {
-  id: number;
-  name: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  description?: string | null;
-  basePrice: number;
-  weight?: number | null;
-  weightUnit?: ('g' | 'oz' | 'lb') | null;
-  /**
-   * Used for nutrition lookup, e.g. jasmine rice, cauliflower rice.
-   */
-  foodType?: string | null;
-  useAutoNutrition?: boolean | null;
-  nutrition?: {
-    calories?: number | null;
-    protein?: number | null;
-    carbs?: number | null;
-    fat?: number | null;
-    fiber?: number | null;
-    sugar?: number | null;
-  };
-  isActive?: boolean | null;
-  image?: (number | null) | Media;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customization-categories".
- */
-export interface CustomizationCategory {
-  id: number;
-  name: string;
-  description?: string | null;
-  displayOrder?: number | null;
-  /**
-   * Optional: set a minimum selections rule for this category.
-   */
-  minSelections?: number | null;
-  /**
-   * Optional: set a maximum selections rule for this category.
-   */
-  maxSelections?: number | null;
-  isRequired?: boolean | null;
-  isActive?: boolean | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customization-options".
- */
-export interface CustomizationOption {
-  id: number;
-  name: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  category: number | CustomizationCategory;
-  description?: string | null;
-  priceAdjustment: number;
-  weight?: number | null;
-  weightUnit?: ('g' | 'oz' | 'lb') | null;
-  /**
-   * Used for nutrition lookup, e.g. chicken breast, rice, black beans.
-   */
-  foodType?: string | null;
-  useAutoNutrition?: boolean | null;
-  nutrition?: {
-    calories?: number | null;
-    protein?: number | null;
-    carbs?: number | null;
-    fat?: number | null;
-    fiber?: number | null;
-    sugar?: number | null;
-  };
-  isDefault?: boolean | null;
-  isActive?: boolean | null;
-  image?: (number | null) | Media;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meals".
- */
-export interface Meal {
-  id: number;
-  title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  summary?: string | null;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  ingredients?:
-    | {
-        name: string;
-        id?: string | null;
-      }[]
-    | null;
-  categories: (number | MealCategory)[];
-  dietaryTags?: (number | DietaryTag)[] | null;
-  /**
-   * Optional base to pair with customizations.
-   */
-  mealBase?: (number | null) | MealBase;
-  /**
-   * Limit builder options for this meal (otherwise use all active categories).
-   */
-  customizationCategories?: (number | CustomizationCategory)[] | null;
-  price: number;
-  prepTimeMinutes?: number | null;
-  servings?: number | null;
-  availability?: {
-    startDate?: string | null;
-    endDate?: string | null;
-  };
-  flags?: {
-    isFeatured?: boolean | null;
-    isActive?: boolean | null;
-  };
-  nutrition?: {
-    useAutoNutrition?: boolean | null;
-    weight?: number | null;
-    weightUnit?: ('g' | 'oz' | 'lb') | null;
-    calories?: number | null;
-    protein?: number | null;
-    carbs?: number | null;
-    fat?: number | null;
-    fiber?: number | null;
-    sugar?: number | null;
-  };
-  media: {
-    image: number | Media;
-    gallery?:
-      | {
-          image: number | Media;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  relatedMeals?: (number | Meal)[] | null;
-  /**
-   * Reviews for this meal
-   */
-  reviews?: (number | Review)[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "reviews".
- */
-export interface Review {
-  id: number;
-  /**
-   * Brief title for the review
-   */
-  title: string;
-  /**
-   * Rating from 1 to 5 stars
-   */
-  rating: number;
-  /**
-   * Detailed review comment
-   */
-  comment: string;
-  /**
-   * The meal being reviewed
-   */
-  meal: number | Meal;
-  /**
-   * User who wrote the review (for authenticated users)
-   */
-  user?: (number | null) | User;
-  /**
-   * Name for guest reviewers
-   */
-  guestName?: string | null;
-  /**
-   * Images uploaded by the reviewer
-   */
-  images?:
-    | {
-        image: number | Media;
-        /**
-         * Optional caption for the image
-         */
-        caption?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Whether the reviewer has purchased this meal
-   */
-  isVerifiedPurchase?: boolean | null;
-  /**
-   * Number of users who found this review helpful
-   */
-  helpfulCount?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meal-plans".
- */
-export interface MealPlan {
-  id: number;
-  title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  tagline?: string | null;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  schedule: {
-    startDate: string;
-    endDate: string;
-  };
-  isFeatured?: boolean | null;
-  isActive?: boolean | null;
-  items?:
-    | {
-        dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
-        mealTime: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-        meal: number | Meal;
-        notes?: string | null;
-        displayOrder?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  image?: (number | null) | Media;
+  special_instructions?: string | null;
+  order?: (number | null) | Order;
+  variant_id?: (number | null) | Variant;
   updatedAt: string;
   createdAt: string;
 }
@@ -1400,25 +1444,6 @@ export interface Testimonial {
   quote: string;
   displayOrder?: number | null;
   photo?: (number | null) | Media;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "order-items".
- */
-export interface OrderItem {
-  id: number;
-  product_id?: (number | null) | Meal;
-  meal_plan_id?: (number | null) | MealPlan;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-  /**
-   * Special instructions for this item
-   */
-  special_instructions?: string | null;
-  variant_id?: (number | null) | Variant;
   updatedAt: string;
   createdAt: string;
 }
@@ -1464,24 +1489,8 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
-        relationTo: 'pages';
-        value: number | Page;
-      } | null)
-    | ({
-        relationTo: 'meal-categories';
-        value: number | MealCategory;
-      } | null)
-    | ({
-        relationTo: 'dietary-tags';
-        value: number | DietaryTag;
-      } | null)
-    | ({
-        relationTo: 'meal-bases';
-        value: number | MealBase;
+        relationTo: 'categories';
+        value: number | Category;
       } | null)
     | ({
         relationTo: 'customization-categories';
@@ -1492,32 +1501,48 @@ export interface PayloadLockedDocument {
         value: number | CustomizationOption;
       } | null)
     | ({
-        relationTo: 'meals';
-        value: number | Meal;
+        relationTo: 'dietary-tags';
+        value: number | DietaryTag;
+      } | null)
+    | ({
+        relationTo: 'meal-bases';
+        value: number | MealBase;
+      } | null)
+    | ({
+        relationTo: 'meal-categories';
+        value: number | MealCategory;
       } | null)
     | ({
         relationTo: 'meal-plans';
         value: number | MealPlan;
       } | null)
     | ({
-        relationTo: 'testimonials';
-        value: number | Testimonial;
-      } | null)
-    | ({
-        relationTo: 'categories';
-        value: number | Category;
+        relationTo: 'meals';
+        value: number | Meal;
       } | null)
     | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
     | ({
+        relationTo: 'order-items';
+        value: number | OrderItem;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
         relationTo: 'reviews';
         value: number | Review;
       } | null)
     | ({
-        relationTo: 'order-items';
-        value: number | OrderItem;
+        relationTo: 'testimonials';
+        value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1603,30 +1628,250 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "categories_select".
  */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  roles?: T;
-  orders?: T;
-  cart?: T;
-  addresses?: T;
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-categories_select".
+ */
+export interface CustomizationCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  displayOrder?: T;
+  minSelections?: T;
+  maxSelections?: T;
+  isRequired?: T;
+  isActive?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-options_select".
+ */
+export interface CustomizationOptionsSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  category?: T;
+  description?: T;
+  priceAdjustment?: T;
+  weight?: T;
+  weightUnit?: T;
+  foodType?: T;
+  useAutoNutrition?: T;
+  nutrition?:
     | T
     | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
+        calories?: T;
+        protein?: T;
+        carbs?: T;
+        fat?: T;
+        fiber?: T;
+        sugar?: T;
       };
+  isDefault?: T;
+  isActive?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dietary-tags_select".
+ */
+export interface DietaryTagsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-bases_select".
+ */
+export interface MealBasesSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  description?: T;
+  basePrice?: T;
+  weight?: T;
+  weightUnit?: T;
+  foodType?: T;
+  useAutoNutrition?: T;
+  nutrition?:
+    | T
+    | {
+        calories?: T;
+        protein?: T;
+        carbs?: T;
+        fat?: T;
+        fiber?: T;
+        sugar?: T;
+      };
+  isActive?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-categories_select".
+ */
+export interface MealCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  icon?: T;
+  displayOrder?: T;
+  isFeatured?: T;
+  isActive?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meal-plans_select".
+ */
+export interface MealPlansSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  tagline?: T;
+  description?: T;
+  schedule?:
+    | T
+    | {
+        startDate?: T;
+        endDate?: T;
+      };
+  isFeatured?: T;
+  isActive?: T;
+  items?:
+    | T
+    | {
+        dayOfWeek?: T;
+        mealTime?: T;
+        meal?: T;
+        notes?: T;
+        displayOrder?: T;
+        id?: T;
+      };
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meals_select".
+ */
+export interface MealsSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  summary?: T;
+  description?: T;
+  ingredients?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  categories?: T;
+  dietaryTags?: T;
+  mealBase?: T;
+  customizationCategories?: T;
+  price?: T;
+  prepTimeMinutes?: T;
+  servings?: T;
+  availability?:
+    | T
+    | {
+        startDate?: T;
+        endDate?: T;
+      };
+  flags?:
+    | T
+    | {
+        isFeatured?: T;
+        isActive?: T;
+      };
+  nutrition?:
+    | T
+    | {
+        useAutoNutrition?: T;
+        weight?: T;
+        weightUnit?: T;
+        calories?: T;
+        protein?: T;
+        carbs?: T;
+        fat?: T;
+        fiber?: T;
+        sugar?: T;
+      };
+  media?:
+    | T
+    | {
+        image?: T;
+        gallery?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
+      };
+  relatedMeals?: T;
+  reviews?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  caption?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-items_select".
+ */
+export interface OrderItemsSelect<T extends boolean = true> {
+  product_id?: T;
+  meal_plan_id?: T;
+  quantity?: T;
+  unit_price?: T;
+  total_price?: T;
+  special_instructions?: T;
+  order?: T;
+  variant_id?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1802,250 +2047,6 @@ export interface FormBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meal-categories_select".
- */
-export interface MealCategoriesSelect<T extends boolean = true> {
-  title?: T;
-  description?: T;
-  icon?: T;
-  displayOrder?: T;
-  isFeatured?: T;
-  isActive?: T;
-  generateSlug?: T;
-  slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "dietary-tags_select".
- */
-export interface DietaryTagsSelect<T extends boolean = true> {
-  name?: T;
-  description?: T;
-  generateSlug?: T;
-  slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meal-bases_select".
- */
-export interface MealBasesSelect<T extends boolean = true> {
-  name?: T;
-  generateSlug?: T;
-  slug?: T;
-  description?: T;
-  basePrice?: T;
-  weight?: T;
-  weightUnit?: T;
-  foodType?: T;
-  useAutoNutrition?: T;
-  nutrition?:
-    | T
-    | {
-        calories?: T;
-        protein?: T;
-        carbs?: T;
-        fat?: T;
-        fiber?: T;
-        sugar?: T;
-      };
-  isActive?: T;
-  image?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customization-categories_select".
- */
-export interface CustomizationCategoriesSelect<T extends boolean = true> {
-  name?: T;
-  description?: T;
-  displayOrder?: T;
-  minSelections?: T;
-  maxSelections?: T;
-  isRequired?: T;
-  isActive?: T;
-  generateSlug?: T;
-  slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customization-options_select".
- */
-export interface CustomizationOptionsSelect<T extends boolean = true> {
-  name?: T;
-  generateSlug?: T;
-  slug?: T;
-  category?: T;
-  description?: T;
-  priceAdjustment?: T;
-  weight?: T;
-  weightUnit?: T;
-  foodType?: T;
-  useAutoNutrition?: T;
-  nutrition?:
-    | T
-    | {
-        calories?: T;
-        protein?: T;
-        carbs?: T;
-        fat?: T;
-        fiber?: T;
-        sugar?: T;
-      };
-  isDefault?: T;
-  isActive?: T;
-  image?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meals_select".
- */
-export interface MealsSelect<T extends boolean = true> {
-  title?: T;
-  generateSlug?: T;
-  slug?: T;
-  summary?: T;
-  description?: T;
-  ingredients?:
-    | T
-    | {
-        name?: T;
-        id?: T;
-      };
-  categories?: T;
-  dietaryTags?: T;
-  mealBase?: T;
-  customizationCategories?: T;
-  price?: T;
-  prepTimeMinutes?: T;
-  servings?: T;
-  availability?:
-    | T
-    | {
-        startDate?: T;
-        endDate?: T;
-      };
-  flags?:
-    | T
-    | {
-        isFeatured?: T;
-        isActive?: T;
-      };
-  nutrition?:
-    | T
-    | {
-        useAutoNutrition?: T;
-        weight?: T;
-        weightUnit?: T;
-        calories?: T;
-        protein?: T;
-        carbs?: T;
-        fat?: T;
-        fiber?: T;
-        sugar?: T;
-      };
-  media?:
-    | T
-    | {
-        image?: T;
-        gallery?:
-          | T
-          | {
-              image?: T;
-              id?: T;
-            };
-      };
-  relatedMeals?: T;
-  reviews?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "meal-plans_select".
- */
-export interface MealPlansSelect<T extends boolean = true> {
-  title?: T;
-  generateSlug?: T;
-  slug?: T;
-  tagline?: T;
-  description?: T;
-  schedule?:
-    | T
-    | {
-        startDate?: T;
-        endDate?: T;
-      };
-  isFeatured?: T;
-  isActive?: T;
-  items?:
-    | T
-    | {
-        dayOfWeek?: T;
-        mealTime?: T;
-        meal?: T;
-        notes?: T;
-        displayOrder?: T;
-        id?: T;
-      };
-  image?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "testimonials_select".
- */
-export interface TestimonialsSelect<T extends boolean = true> {
-  name?: T;
-  role?: T;
-  quote?: T;
-  displayOrder?: T;
-  photo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
- */
-export interface CategoriesSelect<T extends boolean = true> {
-  title?: T;
-  generateSlug?: T;
-  slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  caption?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reviews_select".
  */
 export interface ReviewsSelect<T extends boolean = true> {
@@ -2069,18 +2070,43 @@ export interface ReviewsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "order-items_select".
+ * via the `definition` "testimonials_select".
  */
-export interface OrderItemsSelect<T extends boolean = true> {
-  product_id?: T;
-  meal_plan_id?: T;
-  quantity?: T;
-  unit_price?: T;
-  total_price?: T;
-  special_instructions?: T;
-  variant_id?: T;
+export interface TestimonialsSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  quote?: T;
+  displayOrder?: T;
+  photo?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  roles?: T;
+  orders?: T;
+  cart?: T;
+  addresses?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2402,6 +2428,8 @@ export interface OrdersSelect<T extends boolean = true> {
   tax?: T;
   deliveryFee?: T;
   tip?: T;
+  shipping_address?: T;
+  billing_address?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -59,8 +59,38 @@ export async function PATCH(
     const body = (await req.json()) as UpdateOrderBody
     const updates: UpdateOrderBody = {}
 
-    if (body.status) updates.status = body.status
-    if (body.payment_status) updates.payment_status = body.payment_status
+    const allowedStatus = new Set([
+      'pending',
+      'pending_approval',
+      'confirmed',
+      'preparing',
+      'ready_for_delivery',
+      'out_for_delivery',
+      'delivered',
+      'cancelled',
+      'refunded',
+    ])
+    const allowedPaymentStatus = new Set([
+      'pending',
+      'paid',
+      'failed',
+      'refunded',
+      'partially_refunded',
+    ])
+
+    if (body.status) {
+      if (!allowedStatus.has(body.status)) {
+        return NextResponse.json({ error: 'Invalid status transition' }, { status: 400 })
+      }
+      updates.status = body.status
+    }
+
+    if (body.payment_status) {
+      if (!allowedPaymentStatus.has(body.payment_status)) {
+        return NextResponse.json({ error: 'Invalid payment status transition' }, { status: 400 })
+      }
+      updates.payment_status = body.payment_status
+    }
 
     if (!Object.keys(updates).length) {
       return NextResponse.json({ error: 'No changes provided' }, { status: 400 })

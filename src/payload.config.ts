@@ -36,6 +36,7 @@ import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
 import { SiteSettings } from '@/globals/SiteSettings'
 import { plugins } from './plugins'
+import { ordersCollectionOverride } from '@/collections/Orders'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -52,22 +53,6 @@ export default buildConfig({
     },
     user: Users.slug,
   },
-  collections: [
-    Users,
-    Pages,
-    MealCategories,
-    DietaryTags,
-    MealBases,
-    CustomizationCategories,
-    CustomizationOptions,
-    Meals,
-    MealPlans,
-    Testimonials,
-    Categories,
-    Media,
-    Reviews,
-    OrderItems,
-  ],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
@@ -119,6 +104,22 @@ export default buildConfig({
   }),
   //email: nodemailerAdapter(),
   endpoints: [],
+  collections: [
+    Categories,
+    CustomizationCategories,
+    CustomizationOptions,
+    DietaryTags,
+    MealBases,
+    MealCategories,
+    MealPlans,
+    Meals,
+    Media,
+    OrderItems,
+    Pages,
+    Reviews,
+    Testimonials,
+    Users,
+  ],
   globals: [Header, Footer, SiteSettings, DeliverySettings],
   plugins: [
     ...plugins,

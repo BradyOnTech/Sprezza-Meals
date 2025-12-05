@@ -130,6 +130,17 @@ export async function POST(req: NextRequest) {
 
     const preparedItems = Array.isArray(items) ? items : []
 
+    for (const item of preparedItems) {
+      const quantity = numberOrZero(item.quantity) || 1
+      const unitPrice = numberOrZero(item.unit_price)
+      if (unitPrice < 0 || quantity <= 0) {
+        return NextResponse.json({ error: 'Invalid item pricing or quantity' }, { status: 400 })
+      }
+      if (!item.product_id && !item.meal_plan_id) {
+        return NextResponse.json({ error: 'Item must reference a meal or meal plan' }, { status: 400 })
+      }
+    }
+
     const subtotal = preparedItems.reduce((sum, item) => {
       const quantity = numberOrZero(item.quantity) || 1
       const unitPrice = numberOrZero(item.unit_price)
@@ -200,6 +211,8 @@ export async function POST(req: NextRequest) {
 
       if (itemsError) {
         console.error('[orders POST] order items insert error', itemsError)
+        // Best-effort rollback to avoid orphaned order
+        await supabase.from('orders').delete().eq('id', orderId)
         return NextResponse.json(
           { error: 'Order created but items failed to save' },
           { status: 500 },

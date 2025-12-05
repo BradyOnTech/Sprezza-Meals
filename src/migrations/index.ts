@@ -5,6 +5,7 @@ import * as migration_20251206_orders_guest_access from './20251206_orders_guest
 import * as migration_20251206_orders_address_snapshots from './20251206_orders_address_snapshots';
 import * as migration_20251206_orders_pending_approval from './20251206_orders_pending_approval';
 import * as migration_20251207_orders_payment_method from './20251207_orders_payment_method';
+import * as migration_20251209_fix_payload_relationships from './20251209_fix_payload_relationships';
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20251207_orders_payment_method.up,
     down: migration_20251207_orders_payment_method.down,
     name: '20251207_orders_payment_method'
+  },
+  {
+    up: migration_20251209_fix_payload_relationships.up,
+    down: migration_20251209_fix_payload_relationships.down,
+    name: '20251209_fix_payload_relationships'
   },
 ];
